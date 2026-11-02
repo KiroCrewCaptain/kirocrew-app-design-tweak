@@ -21,8 +21,8 @@ describe('the scoped client', () => {
     expect(manifest.permissions.api).toEqual([
       '/apps/design-tweak/api',
       '/apps/design-tweak/api/*',
+      // A bare entry is a prefix grant: it covers /api/chat/slots/* as well.
       '/api/chat',
-      '/api/chat/slots',
     ])
   })
 
