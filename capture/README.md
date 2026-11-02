@@ -8,7 +8,8 @@ exactly as a user sees it. It is driven by one file per app, `scenes.json`.
 |---|---|
 | `capture.py` | The harness: boots the gateway, seeds data, takes the pictures, records the video |
 | `stub_backend.py` | The offline model stand-in a gateway runs for scenes that show no chat reply: Kiro Crew's stub ACP backend |
-| `scenes.json` | This app's demo data, screenshots and walkthrough script (start from `scenes.example.json`) |
+| `scenes.json` | This app's demo data, screenshots and walkthrough script |
+| `demo_site.py` | Writes the made-up web project (Sunfield Bakery) the pictures preview; `scenes.json` runs it before every pass (`prepare`) |
 | `check_readme.py` | Checks README.md against the standard in `CHECKLIST.md` (CI runs it) |
 
 ## What one run does
@@ -121,9 +122,14 @@ no machine-specific path goes into `scenes.json`:
 {"name": "turn it on", "method": "POST", "path": "/api/apps/my-app/enable"}
 ```
 
-`scenes.example.json` carries the same steps under
-`setup_when_not_built_in`. Say which copy was photographed in
-`"provenance_note"`, which is copied into `media.json`.
+This repository's `scenes.json` does exactly that, so the pictures show this
+repository's own copy. A Kiro Crew that still ships the built-in `design-tweak`
+refuses a second install under the same name, so run the capture on a Kiro Crew
+tree with only the built-in copy removed
+(`src/kiro_crew/apps/builtins/design_tweak/`), from a clean clone of this
+repository (an install copies the source tree, and a clone has no
+`ui/node_modules`). Say which copy was photographed in `"provenance_note"`,
+which is copied into `media.json`.
 
 ## `scenes.json` reference
 
@@ -139,6 +145,7 @@ no machine-specific path goes into `scenes.json`:
 | `data_notes` | List of facts about the demo data a reader of `media.json` should know (for example, dates the app stamps itself) |
 | `settle_hidden` | Extra selectors that must be gone before a frame is taken (`.animate-spin` always is) |
 | `theme_api` | Override for the theme switch call (default `PUT /api/config/theme {"mode": "{{theme}}"}`) |
+| `prepare` | A script and its arguments, run with this interpreter from the repository root before each gateway is seeded (`["capture/demo_site.py", "/tmp/kc-design-tweak-demo"]`), for demo data that is files on disk the app has no API to write. Each pass starts from freshly written files, so no pass sees what an earlier pass's agent edited |
 | `setup` | Ordered HTTP calls: `method`, `path`, `body`, `expect` (status list), `save` (`{"var": "dotted.path.in.response"}`), `optional`; or `{"wait_ms": n}` |
 | `screenshots` | List of shots (below) |
 | `walkthrough` | One recorded flow (below) |
@@ -163,7 +170,7 @@ after every live capture.
 | Step | Does |
 |---|---|
 | `{"goto": "/path"}` | Navigate |
-| `{"click": SEL}` / `{"hover": SEL}` | Click / hover (the recording moves the pointer there first) |
+| `{"click": SEL}` / `{"hover": SEL}` | Click / hover (the recording moves the pointer there first). `"button": "right"` makes it a right-click; `"optional": true` skips a click whose target does not show within `timeout_ms` (default 3000) |
 | `{"fill": SEL, "value": "..."}` | Set a field at once |
 | `{"type": SEL, "value": "...", "delay_ms": 45}` | Type visibly, key by key |
 | `{"press": SEL, "key": "Enter"}` | Press a key in an element |
@@ -175,6 +182,9 @@ after every live capture.
 | `{"scroll": SEL}` | Scroll an element into view |
 | `{"caption": "...", "position": "bottom"}` | Show a caption pill (`"top"` or `"bottom"`, `offset` px from that edge); `"over": SEL` centres it on that element, `"above": SEL` sits it `offset` px above that element; `""` hides it |
 | `{"mouse_park": [x, y]}` | Move the pointer out of the way |
+
+Any pointer or keyboard step, and `wait_for` / `wait_hidden`, takes
+`"frame": SEL` to act inside that iframe (here, the previewed page).
 
 Selectors are Playwright selectors: `text=...`, `role=radio[name='History']`,
 CSS such as `textarea[aria-label='Message input']`.

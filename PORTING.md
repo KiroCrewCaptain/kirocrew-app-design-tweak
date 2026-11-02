@@ -205,8 +205,11 @@ dashboard API. The gateway spawned `backend/server.py` inside its sandbox with
 `hostGaps: []`; the page loaded at `/apps/design-tweak`; a folder registered
 through `POST /projects` previewed from the static loopback server; Edit mode
 and a right-click opened the overlay's comment box; a sent request reached the
-project's own chat session; and the live agent's progress notes, posted through
-`design_tweak_update_thread`, landed on the comment's thread (gap 3).
+project's own chat session; and a live agent, once its session was trusted in
+the chat, edited the project's CSS and posted its progress and "done" notes
+through `design_tweak_update_thread` onto each comment's thread (gap 3), after
+which the page marked the comments done and reloaded the preview. The README
+media (`docs/media/media.json`) are from that setup.
 
 ## What Kiro Crew keeps doing
 

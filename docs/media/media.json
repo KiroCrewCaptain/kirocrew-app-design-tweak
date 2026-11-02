@@ -1,0 +1,95 @@
+{
+  "app": "design-tweak",
+  "captured_at": "2026-11-02T17:06:55Z",
+  "app_commit": "f86e45f69cfeb574a1f33ff060cf3d1b72e5bb79",
+  "kirocrew_commit": "99161724c0ffcb0af7fd64055e1f22bdde7476b3",
+  "kirocrew_tree_dirty": true,
+  "gateway": "isolated temporary home, approval=reads; a freshly seeded gateway for the stub screenshots, one for the live ones and one for the walkthrough",
+  "data": "fictional, seeded through the app's HTTP API (capture/scenes.json)",
+  "agent_backend": {
+    "live": [
+      "use-case-land",
+      "walkthrough"
+    ],
+    "live_model": "the operator's own installed, signed-in kiro-cli over ACP with model \"auto\"; the replies on screen are that model's and vary from run to run",
+    "stub": "Kiro Crew's offline stub ACP backend (capture/stub_backend.py) for every other scene; no chat reply is shown from it",
+    "credit_reading": "the browser answers the top bar's credit readout (/api/sessions/usage) with \"no reading\", so no account balance or email can be shown"
+  },
+  "note": "The isolated gateway served this repository's own copy of the app: capture.py's setup installed it from a clean clone of the commit named in app_commit (POST /api/apps/install), trusted it and enabled it, and every picture shows its committed bundle (ui/dist/index.mjs) and its backend (backend/server.py), which the gateway spawned. Kiro Crew still ships a built-in design-tweak and refuses a second install under the same name, so the Kiro Crew tree the capture ran on is the App Kit level-1 commit with only the built-in copy removed (src/kiro_crew/apps/builtins/design_tweak); kirocrew_tree_dirty records that.",
+  "data_notes": [
+    "The previewed web project is a made-up bakery site (Sunfield Bakery, sunfield-bakery.example) that capture/demo_site.py writes from scratch under the system temp directory before each pass ('prepare'); Design Tweak has no API that writes a project, because the project is the user's own code.",
+    "The folder was registered, selected and given its first two comments through the app's own API (POST /projects, /projects/select, /submit); every other comment was made in the pictures by right-clicking the preview.",
+    "Comments carry the time the backend received them, so their ages read as seconds or minutes before the picture.",
+    "The edits shown as done were made by a live model through the operator's own kiro-cli, in the project's own chat session, after the session was trusted on screen; its wording and the exact CSS it wrote differ from run to run."
+  ],
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "device_scale": 2,
+  "screenshots": [
+    {
+      "file": "hero-dark.png",
+      "name": "hero",
+      "theme": "dark",
+      "bytes": 301140,
+      "width": 1600,
+      "height": 1000,
+      "alt": "The Design Tweak page in Edit mode: on the left, the sunfield-bakery project and Request 1 with two comments not sent yet, one asking for the headline in the bakery's warm orange and one asking for a fully rounded orange button; on the right, a live preview of the Sunfield Bakery site with numbered pins 1.1 on the headline and 1.2 on the button"
+    },
+    {
+      "file": "hero-light.png",
+      "name": "hero",
+      "theme": "light",
+      "bytes": 287626,
+      "width": 1600,
+      "height": 1000,
+      "alt": "The Design Tweak page in Edit mode: on the left, the sunfield-bakery project and Request 1 with two comments not sent yet, one asking for the headline in the bakery's warm orange and one asking for a fully rounded orange button; on the right, a live preview of the Sunfield Bakery site with numbered pins 1.1 on the headline and 1.2 on the button"
+    },
+    {
+      "file": "use-case-batch-light.png",
+      "name": "use-case-batch",
+      "theme": "light",
+      "bytes": 293862,
+      "width": 1600,
+      "height": 1000,
+      "alt": "Request 1 holds two comments, numbered 1.1 and 1.2, waiting to be sent together; clicking the second one opens its note on the pinned button in the preview"
+    },
+    {
+      "file": "use-case-land-light.png",
+      "name": "use-case-land",
+      "theme": "light",
+      "bytes": 297522,
+      "width": 1600,
+      "height": 1000,
+      "alt": "After the request was sent and the agent's session trusted, both comments are marked done with the agent's own one-line notes under them, and the preview has reloaded with the orange headline and the rounded orange button"
+    },
+    {
+      "file": "use-case-point-light.png",
+      "name": "use-case-point",
+      "theme": "light",
+      "bytes": 285912,
+      "width": 1600,
+      "height": 1000,
+      "alt": "In Edit mode, a right-click on the Today's loaves heading in the preview outlines it and opens a comment box with the request Center this heading above the loaves, ready to add"
+    }
+  ],
+  "walkthrough": {
+    "shortened_waits_s": [
+      12.8,
+      24.6
+    ],
+    "mp4": {
+      "file": "walkthrough.mp4",
+      "bytes": 703464
+    },
+    "gif": {
+      "file": "walkthrough.gif",
+      "bytes": 4296591,
+      "width": 960,
+      "fps": 10
+    },
+    "theme": "light",
+    "alt": "A walkthrough of Design Tweak: two comments are already waiting, a third is added by right-clicking a heading in the preview, the batch is sent to the project's own chat session, the agent is trusted to edit, and back in Design Tweak all three comments turn done while the preview shows the changes"
+  }
+}
