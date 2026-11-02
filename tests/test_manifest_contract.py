@@ -92,8 +92,10 @@ LEVEL0_EXPORTS = {
 }
 
 # The host chat endpoints the page calls (slot adopt, project bind, resume,
-# detail read, the send). The built-in page reached them as dashboard code.
-CHAT_GRANT = ["/api/chat", "/api/chat/slots"]
+# detail read, the send). The built-in page reached them as dashboard code. A
+# bare entry is a prefix grant on both matchers, so this one entry covers
+# `/api/chat/slots/*` too, and every other `/api/chat/*` route with it.
+CHAT_GRANT = ["/api/chat"]
 
 _UNTRACKED_DIRS = {".git", "node_modules", "__pycache__", ".pytest_cache", ".venv"}
 _WINDOWS_RESERVED = re.compile(r"^(con|prn|aux|nul|com[1-9]|lpt[1-9])$", re.IGNORECASE)

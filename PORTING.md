@@ -54,7 +54,7 @@ a change here.
 | `handle = log.open("wb")` passed to the dev server and never closed (`backend/server.py:856`) | Opened in a `with` block around the spawn (`backend/server.py`, `_start_dev_proc`) | The child gets its own copy of the descriptor; the built-in kept one open file per dev server for the backend's lifetime. Found by this repository's tests, which run with warnings as errors. |
 | `iconUrl` / `heroImage*` / `screenshots` as absolute `/app-assets/...` files (`app.json:5`, `:55-61`) | `iconPath` / `heroImage*` / `screenshots` as repo-relative PNGs under `assets/` | A registry app's art is repo-relative, and the catalog's publish step refuses SVG for a non-builtin source. The PNGs were rendered from the built-in SVGs (the icon at 512×512 on an opaque tile with its `--ico-a` / `--ico-b` tokens resolved to fixed pink and violet; heroes at 1200×675 and detail banners at 1200×288, with transparent corners). The original SVGs are kept beside them. The store screenshot is the README's light hero. |
 | `ui.pages` `[{"route": "/design-tweak", "icon": "Paintbrush"}]`, page compiled into the dashboard (`app.json:31`, `website/src/apps/builtinRegistry.ts:79`) | `ui.entry: "dist/index.mjs"` (a committed ESM bundle built from `ui/src/`), `ui.pages` `[{"route": "/apps/design-tweak", "label": "Design Tweak"}]`, no `icon` | An installed app ships its page as a bundle AppHost loads. The legacy `/design-tweak` route, nav id and `Paintbrush` glyph of an ADOPTED record come from Kiro Crew's adoption pin (`legacyNav`), never from this manifest, so a fresh install cannot claim them. |
-| `permissions.api` `["/apps/design-tweak/api", "/apps/design-tweak/api/*"]` (`app.json:22-25`) | The same two, plus `"/api/chat"` and `"/api/chat/slots"` | The page creates and binds its per-project chat session, reads its transcript to confirm delivery, and sends the batch, all on the host's chat endpoints. The compiled built-in page called them as dashboard code; a bundle calls through the scoped client, which refuses an undeclared path. This is a widening (gap 2). |
+| `permissions.api` `["/apps/design-tweak/api", "/apps/design-tweak/api/*"]` (`app.json:22-25`) | The same two, plus `"/api/chat"` | The page creates and binds its per-project chat session, reads its transcript to confirm delivery, and sends the batch, all on the host's chat endpoints: `POST /api/chat?ws=1`, `POST /api/chat/slots` and `GET /api/chat/slots/{key}` (`ui/src/api.ts:221-275`). The compiled built-in page called them as dashboard code; a bundle calls through the scoped client, which refuses an undeclared path. A bare entry is a PREFIX grant, so `"/api/chat"` reaches every `/api/chat/*` route, not only those three. A separate `"/api/chat/slots"` entry would add nothing, so there is none. This is a widening (gap 2). |
 | App Store copy keys in the dashboard catalogs (`website/src/components/appstore/appManifest.ts:199-205`) | `l10n` block in `app.json`, one entry per shipped non-English locale | The listing copy travels with the app. It is the `manifest` subtree of `ui/i18n/<locale>.json`, kept equal by a test. The built-in has no `highlights`, so neither does the block. |
 | `"license": "MIT"` (`app.json:8`) | `"license": "Apache-2.0"` | The built-in's code shipped under Kiro Crew's Apache-2.0 licence, which is this repository's `LICENSE`; the manifest now says the same. Adoption does not compare it. |
 | `"minKiroCrewVersion": "0.1.0"` (`app.json:17`) | `"0.12.0"` | The first Kiro Crew whose dashboard reads `l10n` and whose adoption can carry this record. The page uses only names every earlier App SDK exports. |
@@ -100,9 +100,26 @@ for a spawned backend yet. Each import is feature-detected (`try` /
    (`apps/builtin_adoption_checks.py`, `permission_refusal`, in the adoption PR),
    so an existing user's record would stay on the built-in. The built-in page
    reached `/api/chat` and `/api/chat/slots/*` as compiled dashboard code with no
-   declaration (`website/src/apps/design-tweak/api.ts:219-232`, `:367`). Closing
-   this needs the adoption pin to carry the grant the compiled page already
-   exercised, or a consent step at adoption. A fresh install asks for it in the
+   declaration (`website/src/apps/design-tweak/api.ts:219-232`, `:367`).
+   The grant is wider than those calls. A bare `permissions.api` entry is a
+   prefix match on both the gateway and the browser client (Kiro Crew's
+   `dashboard/token_auth_app_scope.py:170`, `_api_pattern_matches`, ends in
+   `path == pattern or path.startswith(pattern + "/")`; the SDK's
+   `scopedApi.ts` matches the same way), and there is no exact-only form. So
+   this app's token can reach every `/api/chat/*` route, including ones the page
+   never calls, such as `DELETE /api/chat/slots/{slot}`,
+   `GET /api/chat/slots/{slot}/export`, `PATCH /api/chat/slots/{slot}/mode` and
+   `DELETE /api/chat/folders/{id}`. The page itself calls only
+   `POST /api/chat?ws=1`, `POST /api/chat/slots` and `GET /api/chat/slots/{key}`.
+   Four built-ins declare the same bare entry (`auto_improvement`,
+   `design_critique`, `ops_mission_control`, `spec_builder`), so this is the
+   existing pattern, not a new class of grant. The decision was to declare the one
+   entry and say what it grants, rather than add a narrower one the matcher would
+   not honour. Whoever settles the adoption pin or the consent step should treat
+   the grant as all of `/api/chat/*`. Narrowing it needs an exact-path or
+   per-method form in Kiro Crew's matcher, a generic App Kit change. Closing
+   this needs the adoption pin to carry the `/api/chat` prefix grant (the
+   compiled page already exercised part of it), or a consent step at adoption. A fresh install asks for it in the
    normal permission dialog.
 3. **The agent's progress tool lives in Kiro Crew and names this app.** The
    agent reports per comment through `design_tweak_update_thread`, a tool on
