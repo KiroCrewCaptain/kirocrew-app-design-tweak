@@ -72,6 +72,12 @@ def test_every_text_file_reads_as_carrying_a_credential():
     assert server._contains_credential(b"\x89PNG\r\n\x1a\n\xff\xfe") is False
 
 
+def test_the_forced_stop_is_distinct_from_the_graceful_one():
+    """Windows has no SIGKILL; the stand-in keeps the host's 9 rather than reusing SIGTERM."""
+    assert _host.SIGKILL != _host.SIGTERM
+    assert _host.SIGKILL == 9
+
+
 def test_no_listener_is_claimed_and_no_process_is_ours():
     assert _host.find_port_listeners(5173) == []
     assert _host.address_covers_loopback("127.0.0.1") is False

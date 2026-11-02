@@ -217,7 +217,9 @@ except Exception:  # noqa: BLE001
     IS_POSIX = os.name == "posix"
     IS_MACOS = sys.platform == "darwin"
     SIGTERM = int(signal.SIGTERM)
-    SIGKILL = int(getattr(signal, "SIGKILL", signal.SIGTERM))
+    # Windows has no SIGKILL; 9 is the host's value there too, which keeps the
+    # forced stop distinct from the graceful one.
+    SIGKILL = int(getattr(signal, "SIGKILL", 9))
     CREATE_NEW_PROCESS_GROUP = int(getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0))
 
     def address_covers_loopback(address: str) -> bool:  # type: ignore[misc]
