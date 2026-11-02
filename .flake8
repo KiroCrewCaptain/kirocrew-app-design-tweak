@@ -1,0 +1,12 @@
+[flake8]
+# Kiro Crew's own settings: the backend is its code, formatted the same way.
+# extend-ignore keeps pycodestyle's black-compatible defaults in effect.
+extend-ignore =
+    # black adds whitespace before ':'
+    E203,
+    # black breaks before a binary operator
+    W503,
+    # after formatting, the remaining long lines are prose and literals
+    E501,
+max-line-length = 100
+exclude = .git,__pycache__,ui/node_modules

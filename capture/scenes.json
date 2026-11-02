@@ -1,0 +1,466 @@
+{
+  "app": "design-tweak",
+  "fixture": "minimal",
+  "locale": "en-US",
+  "timezone": "UTC",
+  "provenance_note": "The isolated gateway served this repository's own copy of the app: capture.py's setup installed it from a clean clone of the commit named in app_commit (POST /api/apps/install), trusted it and enabled it, and every picture shows its committed bundle (ui/dist/index.mjs) and its backend (backend/server.py), which the gateway spawned. Kiro Crew still ships a built-in design-tweak and refuses a second install under the same name, so the Kiro Crew tree the capture ran on is the App Kit level-1 commit with only the built-in copy removed (src/kiro_crew/apps/builtins/design_tweak); kirocrew_tree_dirty records that.",
+  "data_notes": [
+    "The previewed web project is a made-up bakery site (Sunfield Bakery, sunfield-bakery.example) that capture/demo_site.py writes from scratch under the system temp directory before each pass ('prepare'); Design Tweak has no API that writes a project, because the project is the user's own code.",
+    "The folder was registered, selected and given its first two comments through the app's own API (POST /projects, /projects/select, /submit); every other comment was made in the pictures by right-clicking the preview.",
+    "Comments carry the time the backend received them, so their ages read as seconds or minutes before the picture.",
+    "The edits shown as done were made by a live model through the operator's own kiro-cli, in the project's own chat session, after the session was trusted on screen; its wording and the exact CSS it wrote differ from run to run."
+  ],
+  "prepare": [
+    "capture/demo_site.py",
+    "/tmp/kc-design-tweak-demo"
+  ],
+  "init_storage": {
+    "mc-nav": "0"
+  },
+  "ready": "text=Point, describe, and watch the code catch up.",
+  "forbid_text": [
+    "Something went wrong",
+    "Capture failed",
+    "Preview not reachable",
+    "was sealed but delivery could not be confirmed"
+  ],
+  "setup": [
+    {
+      "name": "install this repository",
+      "method": "POST",
+      "path": "/api/apps/install",
+      "body": {
+        "source": "{{app_root}}"
+      }
+    },
+    {
+      "name": "trust it (it runs its own code)",
+      "method": "POST",
+      "path": "/api/security/trusted-apps/design-tweak"
+    },
+    {
+      "name": "turn the app on",
+      "method": "POST",
+      "path": "/api/apps/design-tweak/enable"
+    },
+    {
+      "name": "retire the host's one-time startup intro",
+      "method": "POST",
+      "path": "/api/feature-videos/feedback",
+      "body": {
+        "id": "crewmates",
+        "status": "dismissed"
+      },
+      "optional": true
+    },
+    {
+      "wait_ms": 4000
+    },
+    {
+      "name": "register the demo project",
+      "method": "POST",
+      "path": "/apps/design-tweak/api/projects",
+      "body": {
+        "path": "/tmp/kc-design-tweak-demo/sunfield-bakery"
+      },
+      "save": {
+        "project_id": "project.id"
+      }
+    },
+    {
+      "name": "preview it",
+      "method": "POST",
+      "path": "/apps/design-tweak/api/projects/select",
+      "body": {
+        "id": "{{project_id}}"
+      }
+    },
+    {
+      "name": "comment: the headline",
+      "method": "POST",
+      "path": "/apps/design-tweak/api/submit",
+      "body": {
+        "type": "visual_edit_request",
+        "projectId": "{{project_id}}",
+        "comment": "Make this headline the bakery's warm orange, #c2410c",
+        "selection": {
+          "mode": "single",
+          "elements": [
+            {
+              "tag": "h1",
+              "id": "",
+              "classes": [
+                "hero-title"
+              ],
+              "locator": "main > section:nth-of-type(1) > h1",
+              "parentLocator": "main > section:nth-of-type(1)",
+              "point": {
+                "x": 40,
+                "y": 133
+              },
+              "boundingRect": {
+                "x": 40,
+                "y": 133,
+                "width": 560,
+                "height": 101
+              },
+              "source": {
+                "file": "",
+                "line": 0,
+                "column": 0,
+                "confidence": "low"
+              },
+              "htmlSnippet": "<h1 class=\"hero-title\">Bread baked before sunrise</h1>"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "wait_ms": 1100
+    },
+    {
+      "name": "comment: the button",
+      "method": "POST",
+      "path": "/apps/design-tweak/api/submit",
+      "body": {
+        "type": "visual_edit_request",
+        "projectId": "{{project_id}}",
+        "comment": "Round this button fully and use the same orange, with white text",
+        "selection": {
+          "mode": "single",
+          "elements": [
+            {
+              "tag": "a",
+              "id": "",
+              "classes": [
+                "cta"
+              ],
+              "locator": "main > section:nth-of-type(1) > a",
+              "parentLocator": "main > section:nth-of-type(1)",
+              "point": {
+                "x": 40,
+                "y": 330
+              },
+              "boundingRect": {
+                "x": 40,
+                "y": 330,
+                "width": 184,
+                "height": 42
+              },
+              "source": {
+                "file": "",
+                "line": 0,
+                "column": 0,
+                "confidence": "low"
+              },
+              "htmlSnippet": "<a class=\"cta\" href=\"#breads\">See today's loaves</a>"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "screenshots": [
+    {
+      "name": "hero",
+      "path": "/apps/design-tweak",
+      "themes": [
+        "light",
+        "dark"
+      ],
+      "settle_ms": 2500,
+      "alt": "The Design Tweak page in Edit mode: on the left, the sunfield-bakery project and Request 1 with two comments not sent yet, one asking for the headline in the bakery's warm orange and one asking for a fully rounded orange button; on the right, a live preview of the Sunfield Bakery site with numbered pins 1.1 on the headline and 1.2 on the button",
+      "steps": [
+        {
+          "wait_for": "text=Round this button fully and use the same orange, with white text"
+        },
+        {
+          "wait_ms": 1500
+        },
+        {
+          "click": "button:text-is('Edit')"
+        },
+        {
+          "mouse_park": [
+            1300,
+            860
+          ]
+        },
+        {
+          "wait_ms": 1500
+        }
+      ]
+    },
+    {
+      "name": "use-case-batch",
+      "path": "/apps/design-tweak",
+      "themes": [
+        "light"
+      ],
+      "steps": [
+        {
+          "wait_for": "text=Round this button fully and use the same orange, with white text"
+        },
+        {
+          "wait_ms": 1500
+        },
+        {
+          "click": "button:text-is('Edit')"
+        },
+        {
+          "wait_ms": 800
+        },
+        {
+          "click": "text=Round this button fully and use the same orange, with white text"
+        },
+        {
+          "mouse_park": [
+            1300,
+            860
+          ]
+        },
+        {
+          "wait_ms": 1200
+        }
+      ],
+      "settle_ms": 1200,
+      "alt": "Request 1 holds two comments, numbered 1.1 and 1.2, waiting to be sent together; clicking the second one opens its note on the pinned button in the preview"
+    },
+    {
+      "name": "use-case-point",
+      "path": "/apps/design-tweak",
+      "themes": [
+        "light"
+      ],
+      "steps": [
+        {
+          "wait_for": "text=Round this button fully and use the same orange, with white text"
+        },
+        {
+          "wait_ms": 1500
+        },
+        {
+          "click": "button:text-is('Edit')"
+        },
+        {
+          "wait_ms": 800
+        },
+        {
+          "click": "#breads h2.section-title",
+          "frame": "iframe",
+          "button": "right"
+        },
+        {
+          "type": "textarea",
+          "frame": "iframe",
+          "value": "Center this heading above the loaves",
+          "delay_ms": 0
+        }
+      ],
+      "settle_ms": 800,
+      "alt": "In Edit mode, a right-click on the Today's loaves heading in the preview outlines it and opens a comment box with the request Center this heading above the loaves, ready to add"
+    },
+    {
+      "name": "use-case-land",
+      "path": "/apps/design-tweak",
+      "themes": [
+        "light"
+      ],
+      "live": true,
+      "steps": [
+        {
+          "wait_for": "text=Round this button fully and use the same orange, with white text"
+        },
+        {
+          "wait_ms": 1500
+        },
+        {
+          "click": "button:text-is('Send as Request 1')"
+        },
+        {
+          "wait_for": "text=Sent Request 1",
+          "timeout_ms": 30000
+        },
+        {
+          "hover": "span:text-is('Request 1')"
+        },
+        {
+          "click": "[title='Open in chat']"
+        },
+        {
+          "wait_for": "button:has-text('Trust')",
+          "timeout_ms": 240000
+        },
+        {
+          "click": "button:has-text('Trust')"
+        },
+        {
+          "click": "[role='menuitem']:has-text('Trust all tools for this session')",
+          "optional": true,
+          "timeout_ms": 3000
+        },
+        {
+          "wait_ms": 3000
+        },
+        {
+          "click": ".nav-item:has-text('Design Tweak')"
+        },
+        {
+          "wait_for": "text=2 done",
+          "timeout_ms": 300000
+        },
+        {
+          "wait_ms": 4000
+        }
+      ],
+      "settle_ms": 2000,
+      "alt": "After the request was sent and the agent's session trusted, both comments are marked done with the agent's own one-line notes under them, and the preview has reloaded with the orange headline and the rounded orange button"
+    }
+  ],
+  "walkthrough": {
+    "name": "walkthrough",
+    "theme": "light",
+    "path": "/apps/design-tweak",
+    "live": true,
+    "alt": "A walkthrough of Design Tweak: two comments are already waiting, a third is added by right-clicking a heading in the preview, the batch is sent to the project's own chat session, the agent is trusted to edit, and back in Design Tweak all three comments turn done while the preview shows the changes",
+    "steps": [
+      {
+        "wait_for": "text=Round this button fully and use the same orange, with white text"
+      },
+      {
+        "mouse_park": [
+          1300,
+          860
+        ]
+      },
+      {
+        "caption": "Your web app, live inside Kiro Crew",
+        "position": "bottom"
+      },
+      {
+        "wait_ms": 2500
+      },
+      {
+        "caption": "Two notes are already waiting in Request 1",
+        "position": "bottom"
+      },
+      {
+        "wait_ms": 2500
+      },
+      {
+        "caption": "Switch to Edit, then right-click what should change",
+        "position": "bottom"
+      },
+      {
+        "click": "button:text-is('Edit')"
+      },
+      {
+        "wait_ms": 600
+      },
+      {
+        "click": "#breads h2.section-title",
+        "frame": "iframe",
+        "button": "right"
+      },
+      {
+        "type": "textarea",
+        "frame": "iframe",
+        "value": "Center this heading above the loaves",
+        "delay_ms": 40
+      },
+      {
+        "press": "textarea",
+        "frame": "iframe",
+        "key": "Enter"
+      },
+      {
+        "wait_for": "text=Center this heading above the loaves"
+      },
+      {
+        "wait_ms": 1500
+      },
+      {
+        "caption": "Send the whole batch as one request",
+        "position": "bottom"
+      },
+      {
+        "click": "button:text-is('Send as Request 1')"
+      },
+      {
+        "wait_for": "text=Sent Request 1",
+        "timeout_ms": 30000
+      },
+      {
+        "wait_ms": 1500
+      },
+      {
+        "caption": "The agent works in this project's own chat session",
+        "position": "bottom"
+      },
+      {
+        "hover": "span:text-is('Request 1')"
+      },
+      {
+        "click": "[title='Open in chat']"
+      },
+      {
+        "wait_for": "button:has-text('Trust')",
+        "timeout_ms": 240000,
+        "cut": true
+      },
+      {
+        "caption": "It asks first: trust it for this session",
+        "position": "top",
+        "offset": 120
+      },
+      {
+        "wait_ms": 2500
+      },
+      {
+        "click": "button:has-text('Trust')"
+      },
+      {
+        "click": "[role='menuitem']:has-text('Trust all tools for this session')",
+        "optional": true,
+        "timeout_ms": 3000
+      },
+      {
+        "caption": "",
+        "position": "bottom"
+      },
+      {
+        "wait_ms": 4000
+      },
+      {
+        "click": ".nav-item:has-text('Design Tweak')"
+      },
+      {
+        "wait_for": "text=3 done",
+        "timeout_ms": 300000,
+        "cut": true
+      },
+      {
+        "wait_ms": 1500
+      },
+      {
+        "caption": "Each comment turns done as its edit lands",
+        "position": "bottom"
+      },
+      {
+        "wait_ms": 3500
+      },
+      {
+        "caption": "",
+        "position": "bottom"
+      },
+      {
+        "mouse_park": [
+          1300,
+          860
+        ]
+      }
+    ],
+    "tail_ms": 3000
+  }
+}
