@@ -12,6 +12,7 @@
     "dev_server": "開発サーバー",
     "looking": "検索中…",
     "preview_from_disk_instead": "代わりにディスクからプレビュー",
+    "url_label": "開発サーバーの URL",
     "url_placeholder": "http://localhost:5173",
     "use": "使用"
   },
@@ -20,6 +21,7 @@
   },
   "modes": {
     "edit": "編集",
+    "label": "モード",
     "preview": "プレビュー"
   },
   "page": {
@@ -64,6 +66,7 @@
     "no_app_selected": "Webアプリが選択されていません。ドロップダウンから選んでください — 切り替えは即時に反映されます。",
     "no_dev_script": "dev スクリプトが見つかりません",
     "none_loaded": "まだWebアプリが読み込まれていません。",
+    "path_label": "プロジェクトフォルダーのパス",
     "path_placeholder": "/path/to/your/app",
     "previewing_from": "{{url}} からプレビュー中",
     "remove_from_list": "リストから削除",

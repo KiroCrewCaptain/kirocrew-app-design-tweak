@@ -138,7 +138,7 @@ _URL = re.compile(r"https?://([A-Za-z0-9.-]+)(?::\d+)?[^\s\"'<>]*")
 _LOOPBACK = frozenset({"localhost", "127.0.0.1"})
 
 
-def _credential_matches(text: str) -> Iterator[re.Match[str]]:
+def iter_credential_matches(text: str) -> Iterator[re.Match[str]]:
     return _CREDENTIAL.finditer(text)
 
 
@@ -229,11 +229,11 @@ def nvm_version_bin_dirs() -> tuple[str, ...]:
 
 _NAMES = (
     "FileTooLargeError",
-    "_credential_matches",
     "address_covers_loopback",
     "find_port_listeners",
     "get_ppid",
     "is_sensitive_path",
+    "iter_credential_matches",
     "nvm_version_bin_dirs",
     "path_contains_sensitive",
     "redact_credentials",

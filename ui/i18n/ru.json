@@ -12,6 +12,7 @@
     "dev_server": "Dev-сервер",
     "looking": "Поиск…",
     "preview_from_disk_instead": "Вместо этого показать с диска",
+    "url_label": "URL сервера разработки",
     "url_placeholder": "http://localhost:5173",
     "use": "Использовать"
   },
@@ -20,6 +21,7 @@
   },
   "modes": {
     "edit": "Правка",
+    "label": "Режим",
     "preview": "Предпросмотр"
   },
   "page": {
@@ -64,6 +66,7 @@
     "no_app_selected": "Веб-приложение не выбрано. Выберите его в списке — переключение мгновенное.",
     "no_dev_script": "скрипт dev не найден",
     "none_loaded": "Веб-приложения ещё не загружены.",
+    "path_label": "Путь к папке проекта",
     "path_placeholder": "/path/to/your/app",
     "previewing_from": "Предпросмотр из {{url}}",
     "remove_from_list": "Убрать из списка",

@@ -12,6 +12,7 @@
     "dev_server": "개발 서버",
     "looking": "찾는 중…",
     "preview_from_disk_instead": "대신 디스크에서 미리보기",
+    "url_label": "개발 서버 URL",
     "url_placeholder": "http://localhost:5173",
     "use": "사용"
   },
@@ -20,6 +21,7 @@
   },
   "modes": {
     "edit": "편집",
+    "label": "모드",
     "preview": "미리보기"
   },
   "page": {
@@ -64,6 +66,7 @@
     "no_app_selected": "선택된 웹 앱이 없습니다. 드롭다운에서 선택하세요 — 즉시 전환됩니다.",
     "no_dev_script": "dev 스크립트를 찾을 수 없음",
     "none_loaded": "아직 불러온 웹 앱이 없습니다.",
+    "path_label": "프로젝트 폴더 경로",
     "path_placeholder": "/path/to/your/app",
     "previewing_from": "{{url}}에서 미리보는 중",
     "remove_from_list": "목록에서 제거",

@@ -1,5 +1,5 @@
 import { activeLocale, fmtRelative, useAppApi, useImeGuard, useLanguageGeneration, useNavigate } from "@kirocrew/app-sdk";
-import { cloneElement, createContext, isValidElement, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { cloneElement, createContext, isValidElement, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Archive, ChevronDown, ChevronRight, Eye, Folder, FolderOpen, History, MessageSquare, Monitor, MoreHorizontal, Pencil, Plus, RefreshCw, Send, Trash2, X } from "lucide-react";
 import { Clickable, ErrorNotice } from "@kirocrew/app-sdk/ui";
 import { jsx, jsxs } from "react/jsx-runtime";
@@ -78,6 +78,105 @@ function FolderBody({ open, padding = "2px", instantClose = false, children }) {
 			children
 		})
 	});
+}
+// src/RadioChipGroup.tsx
+/**
+* One-of-N choice drawn as a row of buttons (chips, swatches, mode buttons),
+* announced and operated as a radio group (WAI-ARIA radio pattern).
+*
+* Why not `aria-pressed`: `aria-pressed` reads as N independent on/off toggles,
+* so a screen-reader user hears "pressed" / "not pressed" per button and is
+* never told the buttons are one single-select set (#27459). A genuine two-state
+* toggle (one button that is on or off, or a pair where pressing the active one
+* clears it) keeps `aria-pressed` and does not use this group.
+*
+* How to use: wrap the options in `<RadioChipGroup>` with a name
+* (`ariaLabel` or `ariaLabelledBy`), and give each option `{...radioChip(checked)}`
+* instead of `aria-pressed`. Options must be focusable elements (`<button>`).
+*
+* The group owns the keyboard behaviour so no call site re-implements it:
+* - One Tab stop. While focus is inside the group it is the focused option;
+*   otherwise it is the checked option, or the first enabled one when none is
+*   checked. The group sets each option's `tabIndex` itself, so options must
+*   NOT pass their own `tabIndex` prop.
+* - Arrow keys (Right/Down next, Left/Up previous, wrapping) and Home/End move
+*   focus; disabled options are skipped. By default they do NOT select: many
+*   consumers save on every change (settings write config, a palette saves and
+*   closes, the guide's pick list commits and unmounts), so passing over an
+*   option must never persist it. Space/Enter (the native button click)
+*   chooses. This is the rule `SegmentedControl` already follows.
+* - `selectOnArrow` opts a group into "arrow moves AND selects" (the native
+*   radio behaviour), for a group where a pick is cheap and reversible and
+*   that behaviour is already established (the sidebar duration chips, #22330).
+* - The key is consumed (`stopPropagation`) so a host Radix menu does not also
+*   treat it as its own item-to-item navigation and pull focus out.
+*/
+function RadioChipGroup({ ariaLabel, ariaLabelledBy, className, style, children, onKeyDown: ownKeyDown, selectOnArrow = false, "data-testid": testId }) {
+	const ref = useRef(null);
+	useLayoutEffect(() => {
+		if (ref.current) placeTabStop(ref.current);
+	});
+	const onKeyDown = (e) => {
+		ownKeyDown?.(e);
+		if (e.defaultPrevented) return;
+		if (!(e.key === "Home" || e.key === "End") && RADIO_KEY_STEP[e.key] === void 0) return;
+		const radios = ownRadios(e.currentTarget).filter((r) => !isDisabled(r));
+		if (radios.length === 0) return;
+		e.preventDefault();
+		e.stopPropagation();
+		const current = radios.indexOf(document.activeElement);
+		const next = e.key === "Home" ? 0 : e.key === "End" ? radios.length - 1 : (Math.max(current, 0) + RADIO_KEY_STEP[e.key] + radios.length) % radios.length;
+		radios[next].focus();
+		if (selectOnArrow) radios[next].click();
+	};
+	return /* @__PURE__ */ jsx("div", {
+		ref,
+		role: "radiogroup",
+		"aria-label": ariaLabel,
+		"aria-labelledby": ariaLabelledBy,
+		className,
+		style,
+		onKeyDown,
+		"data-testid": testId,
+		onFocus: (e) => placeTabStop(e.currentTarget),
+		onBlur: (e) => {
+			const group = e.currentTarget;
+			if (!group.contains(e.relatedTarget)) placeTabStop(group, true);
+		},
+		children
+	});
+}
+/** The attributes an option inside a `RadioChipGroup` carries in place of
+*  `aria-pressed`. */
+function radioChip(checked) {
+	return {
+		role: "radio",
+		"aria-checked": checked
+	};
+}
+/** Arrow-key step through a radio group (WAI-ARIA radio pattern: Right/Down is
+*  the next radio, Left/Up the previous, wrapping at either end). */
+var RADIO_KEY_STEP = {
+	ArrowRight: 1,
+	ArrowDown: 1,
+	ArrowLeft: -1,
+	ArrowUp: -1
+};
+/** Give exactly one of the group's own enabled radios `tabIndex` 0: the
+*  focused one while focus is inside (unless `leaving`), else the checked one,
+*  else the first. */
+function placeTabStop(group, leaving = false) {
+	const radios = ownRadios(group);
+	const enabled = radios.filter((r) => !isDisabled(r));
+	const stop = (leaving ? void 0 : enabled.find((r) => r === document.activeElement)) ?? enabled.find((r) => r.getAttribute("aria-checked") === "true") ?? enabled[0];
+	for (const r of radios) r.tabIndex = r === stop ? 0 : -1;
+}
+/** This group's own radios, not those of a radio group nested inside it. */
+function ownRadios(group) {
+	return Array.from(group.querySelectorAll("[role=\"radio\"]")).filter((r) => r.closest("[role=\"radiogroup\"]") === group);
+}
+function isDisabled(el) {
+	return el.disabled === true || el.getAttribute("aria-disabled") === "true";
 }
 // src/DropdownMenu.tsx
 /**
@@ -262,12 +361,14 @@ var CATALOGS = {
 			"dev_server": "ডেভ সার্ভার",
 			"looking": "খোঁজা হচ্ছে…",
 			"preview_from_disk_instead": "পরিবর্তে ডিস্ক থেকে প্রিভিউ করুন",
+			"url_label": "ডেভ সার্ভার URL",
 			"url_placeholder": "http://localhost:5173",
 			"use": "ব্যবহার করুন"
 		},
 		layout: { "drag_to_resize": "আকার বদলাতে টেনে আনুন" },
 		modes: {
 			"edit": "সম্পাদনা",
+			"label": "মোড",
 			"preview": "প্রিভিউ"
 		},
 		page: {
@@ -312,6 +413,7 @@ var CATALOGS = {
 			"no_app_selected": "কোনো ওয়েব অ্যাপ নির্বাচন করা হয়নি। ড্রপডাউন থেকে একটি বেছে নিন — বদলানো সঙ্গে সঙ্গেই হয়।",
 			"no_dev_script": "কোনো dev স্ক্রিপ্ট পাওয়া যায়নি",
 			"none_loaded": "এখনও কোনো ওয়েব অ্যাপ লোড করা হয়নি।",
+			"path_label": "প্রজেক্ট ফোল্ডারের পাথ",
 			"path_placeholder": "/path/to/your/app",
 			"previewing_from": "{{url}} থেকে প্রিভিউ করা হচ্ছে",
 			"remove_from_list": "তালিকা থেকে সরান",
@@ -403,12 +505,14 @@ var CATALOGS = {
 			"dev_server": "Dev-Server",
 			"looking": "Suche läuft…",
 			"preview_from_disk_instead": "Stattdessen von der Festplatte in der Vorschau anzeigen",
+			"url_label": "URL des Entwicklungsservers",
 			"url_placeholder": "http://localhost:5173",
 			"use": "Verwenden"
 		},
 		layout: { "drag_to_resize": "Zum Ändern der Größe ziehen" },
 		modes: {
 			"edit": "Bearbeiten",
+			"label": "Modus",
 			"preview": "Vorschau"
 		},
 		page: {
@@ -453,6 +557,7 @@ var CATALOGS = {
 			"no_app_selected": "Keine Web-App ausgewählt. Wählen Sie eine im Dropdown aus — der Wechsel erfolgt sofort.",
 			"no_dev_script": "kein dev-Skript gefunden",
 			"none_loaded": "Noch keine Web-Apps geladen.",
+			"path_label": "Pfad zum Projektordner",
 			"path_placeholder": "/path/to/your/app",
 			"previewing_from": "Vorschau von {{url}}",
 			"remove_from_list": "Aus der Liste entfernen",
@@ -544,12 +649,14 @@ var CATALOGS = {
 			"dev_server": "Dev server",
 			"looking": "Looking…",
 			"preview_from_disk_instead": "Preview from disk instead",
+			"url_label": "Dev server URL",
 			"url_placeholder": "http://localhost:5173",
 			"use": "Use"
 		},
 		layout: { "drag_to_resize": "Drag to resize" },
 		modes: {
 			"edit": "Edit",
+			"label": "Mode",
 			"preview": "Preview"
 		},
 		page: {
@@ -594,6 +701,7 @@ var CATALOGS = {
 			"no_app_selected": "No web app selected. Pick one in the dropdown — switching is instant.",
 			"no_dev_script": "no dev script found",
 			"none_loaded": "No web apps loaded yet.",
+			"path_label": "Project folder path",
 			"path_placeholder": "/path/to/your/app",
 			"previewing_from": "Previewing from {{url}}",
 			"remove_from_list": "Remove from list",
@@ -685,12 +793,14 @@ var CATALOGS = {
 			"dev_server": "Servidor de desarrollo",
 			"looking": "Buscando…",
 			"preview_from_disk_instead": "Ver la vista previa desde el disco en su lugar",
+			"url_label": "URL del servidor de desarrollo",
 			"url_placeholder": "http://localhost:5173",
 			"use": "Usar"
 		},
 		layout: { "drag_to_resize": "Arrastra para redimensionar" },
 		modes: {
 			"edit": "Editar",
+			"label": "Modo",
 			"preview": "Vista previa"
 		},
 		page: {
@@ -735,6 +845,7 @@ var CATALOGS = {
 			"no_app_selected": "No hay ninguna app web seleccionada. Elige una en el menú desplegable — cambiar es instantáneo.",
 			"no_dev_script": "no se encontró ningún script dev",
 			"none_loaded": "Aún no hay ninguna app web cargada.",
+			"path_label": "Ruta de la carpeta del proyecto",
 			"path_placeholder": "/path/to/your/app",
 			"previewing_from": "Vista previa desde {{url}}",
 			"remove_from_list": "Quitar de la lista",
@@ -826,12 +937,14 @@ var CATALOGS = {
 			"dev_server": "Serveur de développement",
 			"looking": "Recherche…",
 			"preview_from_disk_instead": "Prévisualiser plutôt depuis le disque",
+			"url_label": "URL du serveur de développement",
 			"url_placeholder": "http://localhost:5173",
 			"use": "Utiliser"
 		},
 		layout: { "drag_to_resize": "Glisser pour redimensionner" },
 		modes: {
 			"edit": "Modifier",
+			"label": "Mode",
 			"preview": "Aperçu"
 		},
 		page: {
@@ -876,6 +989,7 @@ var CATALOGS = {
 			"no_app_selected": "Aucune application web sélectionnée. Choisissez-en une dans la liste déroulante — le changement est instantané.",
 			"no_dev_script": "aucun script dev trouvé",
 			"none_loaded": "Aucune application web chargée pour l'instant.",
+			"path_label": "Chemin du dossier du projet",
 			"path_placeholder": "/path/to/your/app",
 			"previewing_from": "Aperçu depuis {{url}}",
 			"remove_from_list": "Retirer de la liste",
@@ -967,12 +1081,14 @@ var CATALOGS = {
 			"dev_server": "Dev server",
 			"looking": "ढूँढा जा रहा है…",
 			"preview_from_disk_instead": "इसके बजाय डिस्क से पूर्वावलोकन करें",
+			"url_label": "डेव सर्वर URL",
 			"url_placeholder": "http://localhost:5173",
 			"use": "उपयोग करें"
 		},
 		layout: { "drag_to_resize": "आकार बदलने के लिए खींचें" },
 		modes: {
 			"edit": "संपादन",
+			"label": "मोड",
 			"preview": "पूर्वावलोकन"
 		},
 		page: {
@@ -1017,6 +1133,7 @@ var CATALOGS = {
 			"no_app_selected": "कोई वेब ऐप चुना नहीं गया। ड्रॉपडाउन से एक चुनें — बदलना तुरंत होता है।",
 			"no_dev_script": "कोई dev स्क्रिप्ट नहीं मिली",
 			"none_loaded": "अभी कोई वेब ऐप लोड नहीं हुआ।",
+			"path_label": "प्रोजेक्ट फ़ोल्डर का पाथ",
 			"path_placeholder": "/path/to/your/app",
 			"previewing_from": "{{url}} से पूर्वावलोकन हो रहा है",
 			"remove_from_list": "सूची से हटाएँ",
@@ -1108,12 +1225,14 @@ var CATALOGS = {
 			"dev_server": "Server di sviluppo",
 			"looking": "Ricerca in corso…",
 			"preview_from_disk_instead": "Vedi invece l'anteprima da disco",
+			"url_label": "URL del server di sviluppo",
 			"url_placeholder": "http://localhost:5173",
 			"use": "Usa"
 		},
 		layout: { "drag_to_resize": "Trascina per ridimensionare" },
 		modes: {
 			"edit": "Modifica",
+			"label": "Modalità",
 			"preview": "Anteprima"
 		},
 		page: {
@@ -1158,6 +1277,7 @@ var CATALOGS = {
 			"no_app_selected": "Nessuna app web selezionata. Scegline una nel menu a tendina — il passaggio è immediato.",
 			"no_dev_script": "nessuno script dev trovato",
 			"none_loaded": "Nessuna app web caricata finora.",
+			"path_label": "Percorso della cartella del progetto",
 			"path_placeholder": "/path/to/your/app",
 			"previewing_from": "Anteprima da {{url}}",
 			"remove_from_list": "Rimuovi dall'elenco",
@@ -1249,12 +1369,14 @@ var CATALOGS = {
 			"dev_server": "開発サーバー",
 			"looking": "検索中…",
 			"preview_from_disk_instead": "代わりにディスクからプレビュー",
+			"url_label": "開発サーバーの URL",
 			"url_placeholder": "http://localhost:5173",
 			"use": "使用"
 		},
 		layout: { "drag_to_resize": "ドラッグしてサイズ変更" },
 		modes: {
 			"edit": "編集",
+			"label": "モード",
 			"preview": "プレビュー"
 		},
 		page: {
@@ -1299,6 +1421,7 @@ var CATALOGS = {
 			"no_app_selected": "Webアプリが選択されていません。ドロップダウンから選んでください — 切り替えは即時に反映されます。",
 			"no_dev_script": "dev スクリプトが見つかりません",
 			"none_loaded": "まだWebアプリが読み込まれていません。",
+			"path_label": "プロジェクトフォルダーのパス",
 			"path_placeholder": "/path/to/your/app",
 			"previewing_from": "{{url}} からプレビュー中",
 			"remove_from_list": "リストから削除",
@@ -1390,12 +1513,14 @@ var CATALOGS = {
 			"dev_server": "개발 서버",
 			"looking": "찾는 중…",
 			"preview_from_disk_instead": "대신 디스크에서 미리보기",
+			"url_label": "개발 서버 URL",
 			"url_placeholder": "http://localhost:5173",
 			"use": "사용"
 		},
 		layout: { "drag_to_resize": "드래그하여 크기 조절" },
 		modes: {
 			"edit": "편집",
+			"label": "모드",
 			"preview": "미리보기"
 		},
 		page: {
@@ -1440,6 +1565,7 @@ var CATALOGS = {
 			"no_app_selected": "선택된 웹 앱이 없습니다. 드롭다운에서 선택하세요 — 즉시 전환됩니다.",
 			"no_dev_script": "dev 스크립트를 찾을 수 없음",
 			"none_loaded": "아직 불러온 웹 앱이 없습니다.",
+			"path_label": "프로젝트 폴더 경로",
 			"path_placeholder": "/path/to/your/app",
 			"previewing_from": "{{url}}에서 미리보는 중",
 			"remove_from_list": "목록에서 제거",
@@ -1531,12 +1657,14 @@ var CATALOGS = {
 			"dev_server": "Dev server",
 			"looking": "Procurando…",
 			"preview_from_disk_instead": "Visualizar do disco em vez disso",
+			"url_label": "URL do servidor de desenvolvimento",
 			"url_placeholder": "http://localhost:5173",
 			"use": "Usar"
 		},
 		layout: { "drag_to_resize": "Arraste para redimensionar" },
 		modes: {
 			"edit": "Editar",
+			"label": "Modo",
 			"preview": "Visualizar"
 		},
 		page: {
@@ -1581,6 +1709,7 @@ var CATALOGS = {
 			"no_app_selected": "Nenhum app web selecionado. Escolha um no menu suspenso — a troca é instantânea.",
 			"no_dev_script": "nenhum script dev encontrado",
 			"none_loaded": "Nenhum app web carregado ainda.",
+			"path_label": "Caminho da pasta do projeto",
 			"path_placeholder": "/path/to/your/app",
 			"previewing_from": "Visualizando de {{url}}",
 			"remove_from_list": "Remover da lista",
@@ -1672,12 +1801,14 @@ var CATALOGS = {
 			"dev_server": "Dev-сервер",
 			"looking": "Поиск…",
 			"preview_from_disk_instead": "Вместо этого показать с диска",
+			"url_label": "URL сервера разработки",
 			"url_placeholder": "http://localhost:5173",
 			"use": "Использовать"
 		},
 		layout: { "drag_to_resize": "Потяните, чтобы изменить размер" },
 		modes: {
 			"edit": "Правка",
+			"label": "Режим",
 			"preview": "Предпросмотр"
 		},
 		page: {
@@ -1722,6 +1853,7 @@ var CATALOGS = {
 			"no_app_selected": "Веб-приложение не выбрано. Выберите его в списке — переключение мгновенное.",
 			"no_dev_script": "скрипт dev не найден",
 			"none_loaded": "Веб-приложения ещё не загружены.",
+			"path_label": "Путь к папке проекта",
 			"path_placeholder": "/path/to/your/app",
 			"previewing_from": "Предпросмотр из {{url}}",
 			"remove_from_list": "Убрать из списка",
@@ -1813,12 +1945,14 @@ var CATALOGS = {
 			"dev_server": "开发服务器",
 			"looking": "正在查找…",
 			"preview_from_disk_instead": "改为从磁盘预览",
+			"url_label": "开发服务器 URL",
 			"url_placeholder": "http://localhost:5173",
 			"use": "使用"
 		},
 		layout: { "drag_to_resize": "拖动以调整大小" },
 		modes: {
 			"edit": "编辑",
+			"label": "模式",
 			"preview": "预览"
 		},
 		page: {
@@ -1863,6 +1997,7 @@ var CATALOGS = {
 			"no_app_selected": "未选择 Web 应用。请在下拉菜单中选择一个 — 切换是即时的。",
 			"no_dev_script": "未找到 dev 脚本",
 			"none_loaded": "尚未加载任何 Web 应用。",
+			"path_label": "项目文件夹路径",
 			"path_placeholder": "/path/to/your/app",
 			"previewing_from": "正在从 {{url}} 预览",
 			"remove_from_list": "从列表中移除",
@@ -2375,6 +2510,125 @@ async function sendChatMessage(message, slot) {
 function chatRoute(slotKey) {
 	return slotKey ? "/chat?" + new URLSearchParams({ sid: slotKey }).toString() : "/chat";
 }
+// src/usePointerDrag.ts
+/**
+* Attach the returned handlers to a drag handle:
+*   const drag = usePointerDrag({ onMove: ({ dx }) => setWidth(w0 - dx), threshold: 10 })
+*   <div {...drag} />
+*/
+function usePointerDrag(opts) {
+	const st = useRef({
+		startX: 0,
+		startY: 0,
+		lastX: 0,
+		lastY: 0,
+		active: false,
+		committed: false
+	});
+	const optsRef = useRef(opts);
+	optsRef.current = opts;
+	const fallback = useRef(null);
+	const disarmFallback = useCallback(() => {
+		fallback.current?.dispose();
+		fallback.current = null;
+	}, []);
+	const endRef = useRef(() => {});
+	const onPointerDown = useCallback((e) => {
+		if (e.pointerType === "mouse" && e.button !== 0) return;
+		const el = e.currentTarget;
+		disarmFallback();
+		let captured = true;
+		try {
+			el.setPointerCapture(e.pointerId);
+		} catch {
+			captured = false;
+		}
+		const s = st.current;
+		s.startX = e.clientX;
+		s.startY = e.clientY;
+		s.lastX = e.clientX;
+		s.lastY = e.clientY;
+		s.active = true;
+		s.committed = (optsRef.current.threshold ?? 10) <= 0;
+		if (!captured) {
+			const pointerId = e.pointerId;
+			const onWindowEnd = (ev) => {
+				if (ev.pointerId !== pointerId) return;
+				endRef.current(ev);
+			};
+			window.addEventListener("pointerup", onWindowEnd);
+			window.addEventListener("pointercancel", onWindowEnd);
+			fallback.current = {
+				pointerId,
+				dispose: () => {
+					window.removeEventListener("pointerup", onWindowEnd);
+					window.removeEventListener("pointercancel", onWindowEnd);
+				}
+			};
+		}
+		optsRef.current.onStart?.(e);
+		if (s.committed) optsRef.current.onMove({
+			dx: 0,
+			dy: 0,
+			x: e.clientX,
+			y: e.clientY,
+			first: true
+		});
+		e.preventDefault();
+	}, [disarmFallback]);
+	const onPointerMove = useCallback((e) => {
+		const s = st.current;
+		if (!s.active) return;
+		s.lastX = e.clientX;
+		s.lastY = e.clientY;
+		const dx = e.clientX - s.startX;
+		const dy = e.clientY - s.startY;
+		const threshold = optsRef.current.threshold ?? 10;
+		if (!s.committed) {
+			if (Math.hypot(dx, dy) < threshold) return;
+			s.committed = true;
+		}
+		optsRef.current.onMove({
+			dx,
+			dy,
+			x: e.clientX,
+			y: e.clientY,
+			first: false
+		});
+	}, []);
+	const end = useCallback((e) => {
+		const s = st.current;
+		if (!s.active) return;
+		s.active = false;
+		disarmFallback();
+		const target = "currentTarget" in e ? e.currentTarget : null;
+		try {
+			target?.releasePointerCapture(e.pointerId);
+		} catch {}
+		if (e.type === "pointerup") {
+			s.lastX = e.clientX;
+			s.lastY = e.clientY;
+		}
+		optsRef.current.onEnd?.({
+			dx: s.lastX - s.startX,
+			dy: s.lastY - s.startY,
+			x: s.lastX,
+			y: s.lastY,
+			first: false,
+			committed: s.committed
+		});
+		s.committed = false;
+	}, [disarmFallback]);
+	endRef.current = end;
+	useEffect(() => disarmFallback, [disarmFallback]);
+	return {
+		onPointerDown,
+		onPointerMove,
+		onPointerUp: end,
+		onPointerCancel: end,
+		onLostPointerCapture: end
+	};
+}
 // src/prompts.ts
 var SESSION_TITLE = (label) => `Design Tweak \u2014 ${label}`;
 var SESSION_SEED = (label, path) => `Design Tweak session for "${label}". Working directory: ${path}\nYou handle visual edit requests for this web app. For each request, edit the exact source file, then post a one-line summary. Keep responses concise.`;
@@ -2671,25 +2925,22 @@ function useDesignTweakPageState() {
 			return 500;
 		}
 	});
-	const onDragStart = useCallback((e) => {
-		e.preventDefault();
-		const startX = e.clientX;
-		const startW = railW;
-		const onMove = (ev) => {
-			const w = Math.min(800, Math.max(360, startW + (ev.clientX - startX)));
-			setRailW(w);
-		};
-		const onUp = (ev) => {
-			window.removeEventListener("mousemove", onMove);
-			window.removeEventListener("mouseup", onUp);
-			const w = Math.min(800, Math.max(360, startW + (ev.clientX - startX)));
+	const railStartWRef = useRef(0);
+	const railResize = usePointerDrag({
+		threshold: 0,
+		onStart: () => {
+			railStartWRef.current = railW;
+		},
+		onMove: ({ dx }) => {
+			setRailW(Math.min(800, Math.max(360, railStartWRef.current + dx)));
+		},
+		onEnd: ({ dx }) => {
+			const w = Math.min(800, Math.max(360, railStartWRef.current + dx));
 			try {
 				localStorage.setItem("ste_rail_w", String(w));
 			} catch {}
-		};
-		window.addEventListener("mousemove", onMove);
-		window.addEventListener("mouseup", onUp);
-	}, [railW]);
+		}
+	});
 	const selected = projects.find((p) => p.id === selectedId);
 	const connected = !!previewId && previewId === selectedId;
 	const switchTo = useCallback((p) => {
@@ -3299,7 +3550,7 @@ function useDesignTweakPageState() {
 		toggleReq,
 		postToOverlay,
 		railW,
-		onDragStart,
+		railResize,
 		selected,
 		connected,
 		switchTo,
@@ -3613,7 +3864,7 @@ function RequestGroup({ req, open, onToggle, onSend, onResend, sendMissing, send
 	});
 }
 function DesignTweak() {
-	const { ime, selectedId, ddOpen, setDdOpen, ddIn, ddTriggerRef, ddPanelRef, adding, setAdding, newPath, setNewPath, detecting, devOpen, setDevOpen, devDraft, setDevDraft, starting, devError, histOpen, setHistOpen, previewId, setPreviewNonce, dimsOpen, setDimsOpen, dims, setDimsFor, mode, status, setStatus, bridgeError, setBridgeError, reqOpen, sendingId, iframeRef, projects, booting, refresh, withFollowUpLabels, toggleReq, postToOverlay, railW, onDragStart, selected, connected, switchTo, connect, disconnect, removeProject, addProject, pickFolder, sendRequest, missingIds, resendRequest, previewProject, myPending, myHistory, previewSrc, previewState, previewNote, isDevServer, markFramed, pinItems, focusComment, openInChat, archiveReq, deleteComment, setDevServer, useDetectedDevServer, startDevServer, setEditMode } = useDesignTweakPageState();
+	const { ime, selectedId, ddOpen, setDdOpen, ddIn, ddTriggerRef, ddPanelRef, adding, setAdding, newPath, setNewPath, detecting, devOpen, setDevOpen, devDraft, setDevDraft, starting, devError, histOpen, setHistOpen, previewId, setPreviewNonce, dimsOpen, setDimsOpen, dims, setDimsFor, mode, status, setStatus, bridgeError, setBridgeError, reqOpen, sendingId, iframeRef, projects, booting, refresh, withFollowUpLabels, toggleReq, postToOverlay, railW, railResize, selected, connected, switchTo, connect, disconnect, removeProject, addProject, pickFolder, sendRequest, missingIds, resendRequest, previewProject, myPending, myHistory, previewSrc, previewState, previewNote, isDevServer, markFramed, pinItems, focusComment, openInChat, archiveReq, deleteComment, setDevServer, useDetectedDevServer, startDevServer, setEditMode } = useDesignTweakPageState();
 	const deleteReq = useCallback(async (req) => {
 		if (!confirm(t("requests.delete_confirm", { number: req.number }))) return;
 		try {
@@ -3757,6 +4008,7 @@ function DesignTweak() {
 											autoFocus: true,
 											onChange: (e) => setNewPath(e.target.value),
 											...ime.bindEnter({ onEnter: () => addProject() }),
+											"aria-label": t("projects.path_label"),
 											placeholder: t("projects.path_placeholder"),
 											className: "flex-1 h-8 px-2 rounded-md bg-bg-elevated border border-border text-[12px] text-text"
 										}), /* @__PURE__ */ jsx("button", {
@@ -3841,6 +4093,7 @@ function DesignTweak() {
 								}, req.id))
 							}), /* @__PURE__ */ jsxs("button", {
 								onClick: () => setHistOpen(!histOpen),
+								"aria-expanded": histOpen,
 								className: "w-full flex items-center gap-2 px-5 text-[15px] font-bold text-text cursor-pointer hover:bg-bg-elevated/40",
 								style: { height: "56px" },
 								children: [
@@ -3871,10 +4124,13 @@ function DesignTweak() {
 				role: "separator",
 				"aria-orientation": "vertical",
 				"aria-label": t("layout.drag_to_resize"),
-				onMouseDown: onDragStart,
+				...railResize,
 				title: t("layout.drag_to_resize"),
 				className: "shrink-0 cursor-col-resize",
-				style: { width: "11px" }
+				style: {
+					width: "11px",
+					touchAction: "none"
+				}
 			}),
 			/* @__PURE__ */ jsxs("div", {
 				className: "flex-1 min-w-0 flex flex-col min-h-0",
@@ -4036,6 +4292,7 @@ function DesignTweak() {
 							className: "relative",
 							children: [/* @__PURE__ */ jsxs("button", {
 								onClick: () => setDimsOpen(!dimsOpen),
+								"aria-expanded": dimsOpen,
 								className: "flex items-center gap-2 h-8 px-3 rounded-xl text-[13px] text-text cursor-pointer hover:bg-bg-elevated",
 								children: [
 									/* @__PURE__ */ jsx(Monitor, { size: 15 }),
@@ -4103,6 +4360,7 @@ function DesignTweak() {
 											setDevDraft("");
 										}
 									}),
+									"aria-label": t("devServer.url_label"),
 									placeholder: t("devServer.url_placeholder"),
 									className: "h-8 px-2 rounded-md bg-bg-elevated border border-border text-[12px] text-text",
 									style: { width: "190px" }
@@ -4127,7 +4385,8 @@ function DesignTweak() {
 							disabled: !previewId,
 							className: "p-2 rounded-md text-muted hover:text-text hover:bg-bg-elevated cursor-pointer disabled:opacity-40",
 							children: /* @__PURE__ */ jsx(RefreshCw, { size: 15 })
-						}), /* @__PURE__ */ jsxs("div", {
+						}), /* @__PURE__ */ jsxs(RadioChipGroup, {
+							ariaLabel: t("modes.label"),
 							className: "flex items-center gap-1",
 							style: {
 								background: "rgba(0,0,0,0.25)",
@@ -4136,6 +4395,8 @@ function DesignTweak() {
 								padding: "4px"
 							},
 							children: [/* @__PURE__ */ jsxs("button", {
+								type: "button",
+								...radioChip(mode === "preview"),
 								onClick: () => setEditMode("preview"),
 								className: `flex items-center justify-center gap-1.5 h-8 px-3 text-[13px] font-bold cursor-pointer transition-all ${mode === "preview" ? "text-accent-fg" : "text-text hover:text-text"}`,
 								style: {
@@ -4144,6 +4405,8 @@ function DesignTweak() {
 								},
 								children: [/* @__PURE__ */ jsx(Eye, { size: 14 }), t("modes.preview")]
 							}), /* @__PURE__ */ jsxs("button", {
+								type: "button",
+								...radioChip(mode === "edit"),
 								onClick: () => setEditMode("edit"),
 								className: `flex items-center justify-center gap-1.5 h-8 px-3 text-[13px] font-bold cursor-pointer transition-all ${mode === "edit" ? "text-accent-fg" : "text-text hover:text-text"}`,
 								style: {

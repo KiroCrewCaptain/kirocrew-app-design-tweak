@@ -26,6 +26,7 @@ PINNED = {
     "kiro_crew.security": {
         "DENIED_ROOT_PARTS",
         "is_sensitive_path",
+        "iter_credential_matches",
         "path_contains_sensitive",
         "redact_credentials",
         "redact_exfiltration_urls",
@@ -36,6 +37,7 @@ PINNED = {
     "kiro_crew.security.redaction": {"_credential_matches"},
     "kiro_crew.sel": {"sel"},
     "kiro_crew.env": {"nvm_version_bin_dirs"},
+    "kiro_crew.atomic_write": {"replace_with_retry"},
     "kiro_crew.platform_compat": {
         "CREATE_NEW_PROCESS_GROUP",
         "IS_MACOS",

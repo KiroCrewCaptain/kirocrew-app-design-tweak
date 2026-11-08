@@ -12,6 +12,7 @@
     "dev_server": "Dev-Server",
     "looking": "Suche läuft…",
     "preview_from_disk_instead": "Stattdessen von der Festplatte in der Vorschau anzeigen",
+    "url_label": "URL des Entwicklungsservers",
     "url_placeholder": "http://localhost:5173",
     "use": "Verwenden"
   },
@@ -20,6 +21,7 @@
   },
   "modes": {
     "edit": "Bearbeiten",
+    "label": "Modus",
     "preview": "Vorschau"
   },
   "page": {
@@ -64,6 +66,7 @@
     "no_app_selected": "Keine Web-App ausgewählt. Wählen Sie eine im Dropdown aus — der Wechsel erfolgt sofort.",
     "no_dev_script": "kein dev-Skript gefunden",
     "none_loaded": "Noch keine Web-Apps geladen.",
+    "path_label": "Pfad zum Projektordner",
     "path_placeholder": "/path/to/your/app",
     "previewing_from": "Vorschau von {{url}}",
     "remove_from_list": "Aus der Liste entfernen",

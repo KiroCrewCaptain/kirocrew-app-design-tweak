@@ -12,6 +12,7 @@
     "dev_server": "开发服务器",
     "looking": "正在查找…",
     "preview_from_disk_instead": "改为从磁盘预览",
+    "url_label": "开发服务器 URL",
     "url_placeholder": "http://localhost:5173",
     "use": "使用"
   },
@@ -20,6 +21,7 @@
   },
   "modes": {
     "edit": "编辑",
+    "label": "模式",
     "preview": "预览"
   },
   "page": {
@@ -64,6 +66,7 @@
     "no_app_selected": "未选择 Web 应用。请在下拉菜单中选择一个 — 切换是即时的。",
     "no_dev_script": "未找到 dev 脚本",
     "none_loaded": "尚未加载任何 Web 应用。",
+    "path_label": "项目文件夹路径",
     "path_placeholder": "/path/to/your/app",
     "previewing_from": "正在从 {{url}} 预览",
     "remove_from_list": "从列表中移除",

@@ -31,6 +31,7 @@ EVERY_GAP = [
     "audit_log",
     "nvm_layout",
     "platform_paths",
+    "atomic_replace",
     "platform_process",
 ]
 
@@ -84,6 +85,14 @@ def test_no_listener_is_claimed_and_no_process_is_ours():
     assert _host.get_ppid(1234) == 0
     assert _host.trusted_system_bin("lsof") is None
     assert _host.nvm_version_bin_dirs() == ()
+
+
+def test_the_state_file_rename_is_a_plain_one(tmp_path):
+    src, dst = tmp_path / "config.json.tmp", tmp_path / "config.json"
+    src.write_text("new", encoding="utf-8")
+    dst.write_text("old", encoding="utf-8")
+    _host.replace_with_retry(src, dst)
+    assert dst.read_text(encoding="utf-8") == "new" and not src.exists()
 
 
 def test_the_strip_of_the_extended_length_prefix_is_the_hosts_rule():

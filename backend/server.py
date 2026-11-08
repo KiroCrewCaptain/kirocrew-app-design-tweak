@@ -57,11 +57,11 @@ IS_POSIX = _host.IS_POSIX
 SIGKILL = _host.SIGKILL
 SIGTERM = _host.SIGTERM
 UTF8_TEXT = _host.UTF8_TEXT
-_credential_matches = _host._credential_matches
 address_covers_loopback = _host.address_covers_loopback
 find_port_listeners = _host.find_port_listeners
 get_ppid = _host.get_ppid
 is_link_or_junction = _host.is_link_or_junction
+iter_credential_matches = _host.iter_credential_matches
 is_sensitive_path = _host.is_sensitive_path
 kill_process_tree = _host.kill_process_tree
 nvm_version_bin_dirs = _host.nvm_version_bin_dirs
@@ -86,11 +86,11 @@ _RUNTIME_COMPAT_IMPORTS = (
     _html,
     address_covers_loopback,
     cast,
-    _credential_matches,
     get_ppid,
     http.client,
     is_link_or_junction,
     is_sensitive_path,
+    iter_credential_matches,
     kill_process_tree,
     parse_qs,
     path_contains_sensitive,

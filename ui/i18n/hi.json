@@ -12,6 +12,7 @@
     "dev_server": "Dev server",
     "looking": "ढूँढा जा रहा है…",
     "preview_from_disk_instead": "इसके बजाय डिस्क से पूर्वावलोकन करें",
+    "url_label": "डेव सर्वर URL",
     "url_placeholder": "http://localhost:5173",
     "use": "उपयोग करें"
   },
@@ -20,6 +21,7 @@
   },
   "modes": {
     "edit": "संपादन",
+    "label": "मोड",
     "preview": "पूर्वावलोकन"
   },
   "page": {
@@ -64,6 +66,7 @@
     "no_app_selected": "कोई वेब ऐप चुना नहीं गया। ड्रॉपडाउन से एक चुनें — बदलना तुरंत होता है।",
     "no_dev_script": "कोई dev स्क्रिप्ट नहीं मिली",
     "none_loaded": "अभी कोई वेब ऐप लोड नहीं हुआ।",
+    "path_label": "प्रोजेक्ट फ़ोल्डर का पाथ",
     "path_placeholder": "/path/to/your/app",
     "previewing_from": "{{url}} से पूर्वावलोकन हो रहा है",
     "remove_from_list": "सूची से हटाएँ",

@@ -12,6 +12,7 @@
     "dev_server": "Dev server",
     "looking": "Procurando…",
     "preview_from_disk_instead": "Visualizar do disco em vez disso",
+    "url_label": "URL do servidor de desenvolvimento",
     "url_placeholder": "http://localhost:5173",
     "use": "Usar"
   },
@@ -20,6 +21,7 @@
   },
   "modes": {
     "edit": "Editar",
+    "label": "Modo",
     "preview": "Visualizar"
   },
   "page": {
@@ -64,6 +66,7 @@
     "no_app_selected": "Nenhum app web selecionado. Escolha um no menu suspenso — a troca é instantânea.",
     "no_dev_script": "nenhum script dev encontrado",
     "none_loaded": "Nenhum app web carregado ainda.",
+    "path_label": "Caminho da pasta do projeto",
     "path_placeholder": "/path/to/your/app",
     "previewing_from": "Visualizando de {{url}}",
     "remove_from_list": "Remover da lista",

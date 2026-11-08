@@ -11,11 +11,13 @@ enforces:
   ``DENIED_ROOT_PARTS``) and the link-safe read (``safe_read_file_bytes_nolink``).
 - the redaction floor (``redact_credentials``, ``redact_exfiltration_urls``,
   ``redact_via_context``) and the credential scanner behind the static server's
-  refusal to serve a file that carries a key (``_credential_matches``).
+  refusal to serve a file that carries a key (``iter_credential_matches``).
 - the security event log (``sel``).
 - the platform helpers that enumerate listeners, walk a process tree and kill
-  one (``kiro_crew.platform_compat``), and the nvm install layout
-  (``nvm_version_bin_dirs``).
+  one (``kiro_crew.platform_compat``), the nvm install layout
+  (``nvm_version_bin_dirs``), and the rename that publishes a state file,
+  retried on Windows while a reader holds the destination
+  (``replace_with_retry``).
 
 Each import is feature-detected, and a missing one never widens access: without
 the proxy check every route but ``/health`` answers 401; without the credential
@@ -23,7 +25,8 @@ fence every path is sensitive; without the safe read every read is refused;
 without the redaction floor a text is withheld rather than shown unredacted;
 without the credential scanner every text file reads as carrying one; without
 the listener, process-tree or trusted-binary helpers no foreign server is
-adopted, no process is claimed as ours and no system tool is run. ``HOST_GAPS``
+adopted, no process is claimed as ours and no system tool is run; without the
+retrying rename a state file is published with a plain one. ``HOST_GAPS``
 names what is missing; ``/health`` reports it so the operator sees why.
 
 Nothing else in ``backend/`` imports ``kiro_crew`` (``tests/test_no_host_imports.py``).
@@ -121,19 +124,28 @@ except Exception:  # noqa: BLE001
 
 
 try:
-    from kiro_crew.security.redaction_patterns import _credential_matches
+    # The public linear-time scanner (Kiro Crew after 0.12.0).
+    from kiro_crew.security import iter_credential_matches
 except Exception:  # noqa: BLE001
     try:
-        # Where the scanner lived before it moved beside the pattern table.
-        from kiro_crew.security.redaction import _credential_matches
+        # The same scanner before it was published, beside the pattern table.
+        from kiro_crew.security.redaction_patterns import (
+            _credential_matches as iter_credential_matches,
+        )
     except Exception:  # noqa: BLE001
-        _gap("credential_scan")
-        _EVERYTHING = re.compile(r"[\s\S]+")
+        try:
+            # Where the scanner lived before it moved beside the pattern table.
+            from kiro_crew.security.redaction import (
+                _credential_matches as iter_credential_matches,
+            )
+        except Exception:  # noqa: BLE001
+            _gap("credential_scan")
+            _EVERYTHING = re.compile(r"[\s\S]+")
 
-        def _credential_matches(text: str) -> Iterator[re.Match[str]]:  # type: ignore[misc]
-            # Every non-empty text reads as one credential, so nothing textual
-            # is served without the host's scanner.
-            return _EVERYTHING.finditer(text[:1] if text else "")
+            def iter_credential_matches(text: str) -> Iterator[re.Match[str]]:  # type: ignore[misc]
+                # Every non-empty text reads as one credential, so nothing textual
+                # is served without the host's scanner.
+                return _EVERYTHING.finditer(text[:1] if text else "")
 
 
 # --- security event log ---------------------------------------------------------
@@ -196,6 +208,17 @@ try:
 except Exception:  # noqa: BLE001
     _gap("platform_paths")
     strip_extended_length_prefix = _local_strip_extended_length_prefix
+
+
+try:
+    from kiro_crew.atomic_write import replace_with_retry
+except Exception:  # noqa: BLE001
+    _gap("atomic_replace")
+
+    def replace_with_retry(src: Any, dst: Any) -> None:  # type: ignore[misc]
+        # A plain rename: on Windows a reader holding the destination then fails
+        # the write instead of it being retried. Nothing is widened.
+        os.replace(src, dst)
 
 
 try:
@@ -287,16 +310,17 @@ __all__ = [
     "get_ppid",
     "is_link_or_junction",
     "is_sensitive_path",
+    "iter_credential_matches",
     "kill_process_tree",
     "nvm_version_bin_dirs",
     "path_contains_sensitive",
     "redact_credentials",
     "redact_exfiltration_urls",
     "redact_via_context",
+    "replace_with_retry",
     "safe_read_file_bytes_nolink",
     "sel",
     "strip_extended_length_prefix",
     "trusted_system_bin",
     "verify_proxy_request",
-    "_credential_matches",
 ]

@@ -12,6 +12,7 @@
     "dev_server": "ডেভ সার্ভার",
     "looking": "খোঁজা হচ্ছে…",
     "preview_from_disk_instead": "পরিবর্তে ডিস্ক থেকে প্রিভিউ করুন",
+    "url_label": "ডেভ সার্ভার URL",
     "url_placeholder": "http://localhost:5173",
     "use": "ব্যবহার করুন"
   },
@@ -20,6 +21,7 @@
   },
   "modes": {
     "edit": "সম্পাদনা",
+    "label": "মোড",
     "preview": "প্রিভিউ"
   },
   "page": {
@@ -64,6 +66,7 @@
     "no_app_selected": "কোনো ওয়েব অ্যাপ নির্বাচন করা হয়নি। ড্রপডাউন থেকে একটি বেছে নিন — বদলানো সঙ্গে সঙ্গেই হয়।",
     "no_dev_script": "কোনো dev স্ক্রিপ্ট পাওয়া যায়নি",
     "none_loaded": "এখনও কোনো ওয়েব অ্যাপ লোড করা হয়নি।",
+    "path_label": "প্রজেক্ট ফোল্ডারের পাথ",
     "path_placeholder": "/path/to/your/app",
     "previewing_from": "{{url}} থেকে প্রিভিউ করা হচ্ছে",
     "remove_from_list": "তালিকা থেকে সরান",
