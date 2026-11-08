@@ -6,7 +6,7 @@ over unchanged:
 
 - the same name, version, skills, ``storage`` grant, platform and
   ``defaultEnabled`` as the built-in (``tests/fixtures/builtin-app.json`` is its
-  manifest at the commit this was ported from), and no agents, MCP servers or
+  manifest on Kiro Crew ``main`` at ``6d07df11cf``), and no agents, MCP servers or
   overlays it did not have;
 - the built-in's backend paths, so the proxy path (and the agent's progress
   route behind it) is the same;

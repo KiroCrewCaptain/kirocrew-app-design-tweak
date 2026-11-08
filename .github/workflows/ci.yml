@@ -59,9 +59,11 @@ jobs:
         run: python -m pytest
 
   # The same backend suite with the real host imported instead of the double:
-  # the public Kiro Crew repository at the commit this app was ported from,
-  # installed with its own runtime dependencies. backend/_host.py then resolves
-  # every name to the gateway's own function, as it does in an installed copy.
+  # the public Kiro Crew repository at the main commit whose wheel copy this app
+  # was last brought up to (PORTING.md), installed with its own runtime
+  # dependencies. backend/_host.py then resolves every name to the gateway's own
+  # function, as it does in an installed copy, and the host's own manifest reader
+  # and schema builder check app.json's agentTools block.
   real-host:
     name: Tests against the real Kiro Crew host
     runs-on: ubuntu-latest
@@ -75,7 +77,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: kirodotdev/KiroCrew
-          ref: 4bb268b4e94a28db05b43bad1f037bcb5cca2ff7
+          ref: 6d07df11cfb64f4c3fda0466165c7a0ba3efe748
           path: kirocrew
           persist-credentials: false
 
