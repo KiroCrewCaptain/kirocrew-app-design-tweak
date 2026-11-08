@@ -200,6 +200,13 @@ The picker exists only on a Mac. Type the folder's path and choose **Add**.
 The agent is probably waiting for you. Open the session with the chat icon on
 the request's row and answer its question.
 
+**The agent finished, but the comments never turn green.**
+This happens on a copy of Design Tweak installed from its repository instead of
+the one that comes with Kiro Crew: Kiro Crew does not hand the agent the tool
+that posts its notes and done marks to this page yet. The edits themselves still
+land in your files. Choose the refresh button to see them, and archive the
+request from its **⋯** menu when you are happy with it.
+
 **"Request N is ready but this app has no folder…"**
 The request has no project folder, so there is no session to send it to. Set the
 project's folder, then send it from the list.
@@ -216,7 +223,7 @@ this copy differs from the built-in, why, and what Kiro Crew still has to change
 
 | Path | What it is |
 |---|---|
-| `app.json` | The app manifest: the spawned backend, the `ui` entry and the `l10n` listing copy |
+| `app.json` | The app manifest: the spawned backend, the `ui` entry, the agent's progress tool (`agentTools`) and the `l10n` listing copy |
 | `backend/server.py` | The backend the gateway starts (`backend.entryPoint`): a loopback HTTP server behind the gateway's signed proxy at `/apps/design-tweak/api/*` |
 | `backend/http_api.py`, `request_state.py`, `preview_files.py`, `dev_preview.py` | Its routes, the project registry and request queue, the static preview servers, and dev-server discovery with the injecting proxy |
 | `backend/_host.py` | Everything the backend takes from Kiro Crew, each name feature-detected with a stand-in that refuses |
@@ -240,9 +247,16 @@ the proxy signature check, the credential-path check, the link-safe file read,
 the redaction of secrets from text, the security event log, and the helpers that
 list listening ports and stop a process tree. `backend/_host.py` imports each one
 inside a guard; when one is missing the app refuses that capability rather than
-working without it, and `/health` names it under `hostGaps`. The agent reports
-progress through Kiro Crew's `design_tweak_update_thread` tool, which still lives
-in Kiro Crew (PORTING.md, gap 3).
+working without it, and `/health` names it under `hostGaps`.
+
+The agent reports progress through the `design_tweak_update_thread` tool. The
+app declares it in `app.json` (`agentTools`) and serves it from its own backend at
+`POST /api/agent-tools`, as one write to the comment's thread; Kiro Crew lists it
+to the agent, checks each call against the declared arguments, and forwards it
+through the signed proxy. Kiro Crew lists an app's declared tools only for the
+copy that ships with Kiro Crew today, so a copy installed from this repository
+installs the declaration but the agent does not see the tool yet (PORTING.md,
+gap 3).
 
 ### Install from a clone
 
