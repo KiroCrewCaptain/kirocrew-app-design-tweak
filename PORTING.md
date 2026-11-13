@@ -61,7 +61,7 @@ a change here.
 | `handle = log.open("wb")` passed to the dev server and never closed (`backend/server.py:856`) | Opened in a `with` block around the spawn (`backend/server.py`, `_start_dev_proc`) | The child gets its own copy of the descriptor; the built-in kept one open file per dev server for the backend's lifetime. Found by this repository's tests, which run with warnings as errors. |
 | `iconUrl` / `heroImage*` / `screenshots` as absolute `/app-assets/...` files (`app.json:5`, `:55-61`) | `iconPath` / `heroImage*` / `screenshots` as repo-relative PNGs under `assets/` | A registry app's art is repo-relative, and the catalog's publish step refuses SVG for a non-builtin source. The PNGs were rendered from the built-in SVGs (the icon at 512×512 on an opaque tile with its `--ico-a` / `--ico-b` tokens resolved to fixed pink and violet; heroes at 1200×675 and detail banners at 1200×288, with transparent corners). The original SVGs are kept beside them. The store screenshot is the README's light hero. |
 | `ui.pages` `[{"route": "/design-tweak", "icon": "Paintbrush"}]`, page compiled into the dashboard (`app.json:31`, `website/src/apps/builtinRegistry.ts:79`) | `ui.entry: "dist/index.mjs"` (a committed ESM bundle built from `ui/src/`), `ui.pages` `[{"route": "/apps/design-tweak", "label": "Design Tweak"}]`, no `icon` | An installed app ships its page as a bundle AppHost loads. The legacy `/design-tweak` route, nav id and `Paintbrush` glyph of an ADOPTED record come from Kiro Crew's adoption pin (`legacyNav`), never from this manifest, so a fresh install cannot claim them. |
-| `permissions.api` `["/apps/design-tweak/api", "/apps/design-tweak/api/*"]` (`app.json:22-25`) | The same two, plus `"/api/chat"` | The page creates and binds its per-project chat session, reads its transcript to confirm delivery, and sends the batch, all on the host's chat endpoints: `POST /api/chat?ws=1`, `POST /api/chat/slots` and `GET /api/chat/slots/{key}` (`ui/src/api.ts:221-275`). The compiled built-in page called them as dashboard code; a bundle calls through the scoped client, which refuses an undeclared path. A bare entry is a PREFIX grant, so `"/api/chat"` reaches every `/api/chat/*` route, not only those three. A separate `"/api/chat/slots"` entry would add nothing, so there is none. This is a widening (gap 2). |
+| `permissions.api` `["/apps/design-tweak/api", "/apps/design-tweak/api/*"]` (`app.json:22-25`) | The same two, plus `"/api/chat"` | The page creates and binds its per-project chat session, reads its transcript to confirm delivery, and sends the batch, all on the host's chat endpoints: `POST /api/chat?ws=1`, `POST /api/chat/slots` and `GET /api/chat/slots/{key}` (`ui/src/api.ts:221-275`). The compiled built-in page called them as dashboard code; a bundle calls through the scoped client, which refuses an undeclared path. A bare entry is a PREFIX grant, so `"/api/chat"` reaches every `/api/chat/*` route, not only those three. A separate `"/api/chat/slots"` entry would add nothing, so there is none. kirodotdev/KiroCrew#36342 declares the same entry in the built-in's own manifest, so it is no longer a widening (gap 2). |
 | App Store copy keys in the dashboard catalogs (`website/src/components/appstore/appManifest.ts:199-205`) | `l10n` block in `app.json`, one entry per shipped non-English locale | The listing copy travels with the app. It is the `manifest` subtree of `ui/i18n/<locale>.json`, kept equal by a test. The built-in has no `highlights`, so neither does the block. |
 | `"license": "MIT"` (`app.json:8`) | `"license": "Apache-2.0"` | The built-in's code shipped under Kiro Crew's Apache-2.0 licence, which is this repository's `LICENSE`; the manifest now says the same. Adoption does not compare it. |
 | `"minKiroCrewVersion": "0.1.0"` (`app.json:17`) | `"0.12.0"` | The first Kiro Crew whose dashboard reads `l10n` and whose adoption can carry this record. The page uses only names every earlier App SDK exports. |
@@ -97,8 +97,9 @@ manifest reader and schema builder), and the `test` job against
 
 ## Remaining gaps
 
-Gaps 1, 2 and 3 block the adoption pin: with any of them open an existing
-user's record either does not move (gap 2) or moves and loses something (gap 3).
+Gaps 1 and 3 block the adoption pin: with either open an existing user's
+record moves and loses something (gap 3). Gap 2 is closed on the Kiro Crew side
+once kirodotdev/KiroCrew#36342 ships.
 Each needs a Kiro Crew change or an owner decision, not a change here.
 
 1. **A public backend seam for spawned app processes** (`backend/_host.py`). The
@@ -111,36 +112,32 @@ Each needs a Kiro Crew change or an owner decision, not a change here.
    only on a Kiro Crew 0.12.0 host. Kiro Crew's `security/paths.py:225` comment
    names this app as a reader. Whether such a seam exists is an open owner
    question on Kiro Crew #26967.
-2. **The chat grant widens `permissions.api`, so adoption refuses the move.**
-   Adoption's permission-parity check (E9, `apps/builtin_adoption_checks.py`,
-   `permission_refusal`) holds back every entry the built-in's manifest did not
-   declare, and refuses with `permission_widening`. Checked on Kiro Crew `main`
-   at `6d07df11cf` with the built-in registered in a scratch data home:
-   `permission_refusal("design-tweak", <this app.json>)` answers
-   `permission_widening`, and the same manifest without `"/api/chat"` answers
-   `None`. So an existing user's record stays on the built-in. The built-in page
-   reached `/api/chat` and `/api/chat/slots/*` as compiled dashboard code with no
-   declaration (`website/src/apps/design-tweak/api.ts:219-232`, `:367`); this
-   bundle calls them through the scoped client, which refuses an undeclared path,
-   so the entry cannot be dropped without breaking delivery to the agent.
+2. **The chat grant (closed by kirodotdev/KiroCrew#36342).** Adoption's permission-parity
+   check (E9, `apps/builtin_adoption_checks.py`, `permission_refusal`) holds back
+   every entry the built-in's approved set does not hold, and a built-in approves
+   what its wheel copy ships at every start. kirodotdev/KiroCrew#36342, under the owner
+   ruling on Kiro Crew #26967 (an app gets what its built-in already uses,
+   declared in the wheel copy first), declares `"/api/chat"` in the wheel copy, so
+   the release that ships it grants the entry to every existing user before the
+   pin. Checked on that change with the built-in registered in a scratch data
+   home: `permission_refusal("design-tweak", <this app.json>)` answers `None`, and
+   the same manifest with one more host path answers `permission_widening`. The
+   built-in page reached `/api/chat` and `/api/chat/slots/*` as compiled
+   dashboard code with no declaration; this bundle calls them through the scoped
+   client, which refuses an undeclared path, so the entry cannot be dropped
+   without breaking delivery to the agent.
    The grant is wider than those calls. A bare `permissions.api` entry is a
-   prefix match on both the gateway and the browser client (Kiro Crew's
-   `dashboard/token_auth_app_scope.py`, `_api_pattern_matches`, ends in
-   `path == pattern or path.startswith(pattern + "/")`; the SDK's
-   `scopedApi.ts` matches the same way), and there is no exact-only form. So
-   this app's token can reach every `/api/chat/*` route, including ones the page
-   never calls, such as `DELETE /api/chat/slots/{slot}`,
-   `GET /api/chat/slots/{slot}/export`, `PATCH /api/chat/slots/{slot}/mode` and
-   `DELETE /api/chat/folders/{id}`. The page itself calls only
-   `POST /api/chat?ws=1`, `POST /api/chat/slots` and `GET /api/chat/slots/{key}`.
-   Four built-ins declare the same bare entry (`auto_improvement`,
-   `design_critique`, `ops_mission_control`, `spec_builder`), so this is the
-   existing pattern, not a new class of grant. Closing this is a Kiro Crew
-   decision: declare `"/api/chat"` in the wheel built-in's own manifest in a
-   release before the pin (so the record's approved set already holds it), or a
-   consent step at adoption; narrowing it needs an exact-path or per-method form
-   in Kiro Crew's matcher. A fresh install asks for it in the normal permission
-   dialog.
+   prefix match on both the gateway and the browser client, and the slot routes
+   need the prefix because their key is a path segment. So this app's token can
+   reach every `/api/chat/*` route, including ones the page never calls, such as
+   `DELETE /api/chat/slots/{slot}`, `GET /api/chat/slots/{slot}/export`,
+   `PATCH /api/chat/slots/{slot}/mode` and `DELETE /api/chat/folders/{id}`; on
+   the per-slot routes an app caller reaches only the slots it owns
+   (`dashboard/slot_ownership.py`). The page itself calls only
+   `POST /api/chat?ws=1`, `POST /api/chat/slots`,
+   `POST /api/chat/slots/{key}/project`, `POST /api/chat/slots/{key}/resume` and
+   `GET /api/chat/slots/{key}`. A fresh install asks for it in the normal
+   permission dialog, which lists it.
 3. **The agent's progress tool is not listed for this copy.** The tool itself no
    longer lives in Kiro Crew: this app declares it (`agentTools`) and serves it
    (`POST /api/agent-tools`), exactly as the wheel copy does since Kiro Crew
@@ -288,16 +285,18 @@ media (`docs/media/media.json`) are from that setup.
 The release that adds adoption still ships the built-in. A user's built-in
 record moves onto this repository at the commit Kiro Crew pins, on the restart
 after the tree is fetched and verified; a record that cannot move (offline, a
-refused grant (gap 2), or the operator's admission policy) keeps running the
+refused grant, or the operator's admission policy) keeps running the
 built-in copy, unchanged. The KiroCrewApps catalog gets a `git` row for this
 repository at that same commit in the same release. Removing the built-in from
-Kiro Crew is a later release, after gaps 1, 2, 3, 7 and 8 are closed.
+Kiro Crew is a later release, after gaps 1, 3, 7 and 8 are closed and a release
+carrying kirodotdev/KiroCrew#36342 has shipped.
 
 ## Release handoff: one commit for both pins
 
 The adoption pin and the catalog row must name the same commit, and that commit
-must be the ported tree. Do not compute the pin while gap 2 or gap 3 is open:
-with gap 2 the release adopts nothing (E9 refuses), and with gap 3 an adopted
+must be the ported tree. Do not compute the pin before kirodotdev/KiroCrew#36342 ships
+or while gap 3 is open: without that change the release adopts nothing (E9
+refuses), and with gap 3 an adopted
 user's agent loses its progress tool. The pin's `minAppSdkLevel` must be at
 least 2, the level whose host reads `agentTools`.
 

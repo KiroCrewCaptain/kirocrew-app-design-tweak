@@ -6,12 +6,14 @@ over unchanged:
 
 - the same name, version, skills, ``storage`` grant, platform and
   ``defaultEnabled`` as the built-in (``tests/fixtures/builtin-app.json`` is its
-  manifest on Kiro Crew ``main`` at ``6d07df11cf``), and no agents, MCP servers or
-  overlays it did not have;
+  manifest on Kiro Crew ``main`` at ``6d07df11cf``, with the ``permissions.api``
+  list kirodotdev/KiroCrew#36342 gives it), and no agents, MCP servers or overlays it did
+  not have;
 - the built-in's backend paths, so the proxy path (and the agent's progress
   route behind it) is the same;
-- ``permissions.api`` widened by exactly the host chat endpoints the built-in
-  page reached without declaring them (PORTING.md, "Remaining gaps");
+- the built-in's ``permissions.api`` exactly, which since kirodotdev/KiroCrew#36342 holds
+  the host chat endpoints the page calls, so adoption is no widening (PORTING.md,
+  "Remaining gaps", gap 2);
 - nothing that needs a build at install time, and no symlinks or file names a
   Windows checkout cannot hold;
 - a committed UI bundle that imports only modules the dashboard provides, and
@@ -92,9 +94,10 @@ LEVEL0_EXPORTS = {
 }
 
 # The host chat endpoints the page calls (slot adopt, project bind, resume,
-# detail read, the send). The built-in page reached them as dashboard code. A
-# bare entry is a prefix grant on both matchers, so this one entry covers
-# `/api/chat/slots/*` too, and every other `/api/chat/*` route with it.
+# detail read, the send). The built-in page reached them as dashboard code, and
+# its manifest declares them since kirodotdev/KiroCrew#36342. A bare entry is a prefix
+# grant on both matchers, so this one entry covers `/api/chat/slots/*` too, and
+# every other `/api/chat/*` route with it.
 CHAT_GRANT = ["/api/chat"]
 
 _UNTRACKED_DIRS = {".git", "node_modules", "__pycache__", ".pytest_cache", ".venv"}
@@ -174,12 +177,12 @@ class TestTheManifest(unittest.TestCase):
         self.assertNotIn("agents", builtin)
         self.assertNotIn("agents", manifest)
 
-    def test_the_grant_is_the_builtins_plus_the_chat_endpoints(self) -> None:
+    def test_the_grant_is_the_builtins_with_the_chat_endpoints(self) -> None:
         manifest, builtin = _manifest(), _builtin()
-        self.assertEqual(manifest["permissions"]["api"], builtin["permissions"]["api"] + CHAT_GRANT)
-        rest = {k: v for k, v in manifest["permissions"].items() if k != "api"}
-        builtin_rest = {k: v for k, v in builtin["permissions"].items() if k != "api"}
-        self.assertEqual(rest, builtin_rest)
+        self.assertEqual(manifest["permissions"], builtin["permissions"])
+        for entry in CHAT_GRANT:
+            with self.subTest(entry=entry):
+                self.assertIn(entry, manifest["permissions"]["api"])
 
     def test_declares_nothing_adoption_cannot_carry(self) -> None:
         manifest = _manifest()
