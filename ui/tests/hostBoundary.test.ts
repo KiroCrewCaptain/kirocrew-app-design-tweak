@@ -21,8 +21,10 @@ describe('the scoped client', () => {
     expect(manifest.permissions.api).toEqual([
       '/apps/design-tweak/api',
       '/apps/design-tweak/api/*',
-      // A bare entry is a prefix grant: it covers /api/chat/slots/* as well.
-      '/api/chat',
+      // The send's one path exactly, and the slot routes under a prefix (their
+      // key is a path segment), as the built-in's own manifest declares them.
+      '=/api/chat',
+      '/api/chat/slots',
     ])
   })
 
@@ -30,6 +32,26 @@ describe('the scoped client', () => {
     const fetchMock = vi.fn(async (..._args: unknown[]) => new Response('{}'))
     vi.stubGlobal('fetch', fetchMock)
     await expect(currentAppApi().raw('/api/config')).rejects.toThrow(/not permitted/)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('reaches the send and the slot routes, and no other chat route', async () => {
+    const fetchMock = vi.fn(async (..._args: unknown[]) => new Response('{}'))
+    vi.stubGlobal('fetch', fetchMock)
+    for (const path of [
+      '/api/chat?ws=1',
+      '/api/chat/slots',
+      '/api/chat/slots/design-tweak-abc/project',
+      '/api/chat/slots/design-tweak-abc/resume',
+      '/api/chat/slots/design-tweak-abc',
+    ]) {
+      await expect(currentAppApi().raw(path)).resolves.toBeInstanceOf(Response)
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(5)
+    fetchMock.mockClear()
+    for (const path of ['/api/chat/folders', '/api/chat/headroom', '/api/chat/mode', '/api/chatx']) {
+      await expect(currentAppApi().raw(path)).rejects.toThrow(/not permitted/)
+    }
     expect(fetchMock).not.toHaveBeenCalled()
   })
 

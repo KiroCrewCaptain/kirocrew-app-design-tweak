@@ -6,9 +6,8 @@ over unchanged:
 
 - the same name, version, skills, ``storage`` grant, platform and
   ``defaultEnabled`` as the built-in (``tests/fixtures/builtin-app.json`` is its
-  manifest on Kiro Crew ``main`` at ``6d07df11cf``, with the ``permissions.api``
-  list kirodotdev/KiroCrew#36342 gives it), and no agents, MCP servers or overlays it did
-  not have;
+  manifest as kirodotdev/KiroCrew#36342 left it, on Kiro Crew ``main`` at
+  ``af94fac51f``), and no agents, MCP servers or overlays it did not have;
 - the built-in's backend paths, so the proxy path (and the agent's progress
   route behind it) is the same;
 - the built-in's ``permissions.api`` exactly, which since kirodotdev/KiroCrew#36342 holds
@@ -93,12 +92,60 @@ LEVEL0_EXPORTS = {
     },
 }
 
-# The host chat endpoints the page calls (slot adopt, project bind, resume,
-# detail read, the send). The built-in page reached them as dashboard code, and
-# its manifest declares them since kirodotdev/KiroCrew#36342. A bare entry is a prefix
-# grant on both matchers, so this one entry covers `/api/chat/slots/*` too, and
-# every other `/api/chat/*` route with it.
-CHAT_GRANT = ["/api/chat"]
+# The host chat endpoints the page calls (the send, slot adopt, project bind,
+# resume, detail read). The built-in page reached them as dashboard code, and its
+# manifest declares them since kirodotdev/KiroCrew#36342: `=/api/chat` is that one
+# path exactly (App Kit seam level 7), and `/api/chat/slots` is a prefix, which the
+# slot routes need because their key is a path segment. The rest of `/api/chat/*`
+# (folders, channel targets, headroom, mode) is not declared.
+CHAT_GRANT = ["=/api/chat", "/api/chat/slots"]
+PAGE_CALLS = [
+    "/api/chat?ws=1",
+    "/api/chat/slots",
+    "/api/chat/slots/design-tweak-abc/project",
+    "/api/chat/slots/design-tweak-abc/resume",
+    "/api/chat/slots/design-tweak-abc",
+]
+UNDECLARED_CHAT_PATHS = [
+    "/api/chatx",
+    "/api/chat/folders",
+    "/api/chat/folders/reorder",
+    "/api/chat/channel-targets",
+    "/api/chat/headroom",
+    "/api/chat/mode",
+    "/api/chat/slotsx",
+    "/api/sessions",
+]
+EXACT_API_ENTRY_MARK = "="
+
+
+def _declared_pattern_matches(pattern: str, path: str) -> bool:
+    """Whether one ``permissions.api`` entry covers *path*, as the gateway decides.
+
+    Against the real host this is the gateway's own matcher. Without it, the
+    documented rule (App Kit ``app-kit-platform.md``, "Scoped frontend HTTP
+    transport"): ``=`` names one path exactly, ``/*`` covers the base and its
+    children, a trailing ``*`` is a string prefix, and a bare entry covers itself
+    and its children at a slash.
+    """
+
+    path = path.split("?", 1)[0]
+    try:
+        from kiro_crew.dashboard.token_auth_app_scope import _api_pattern_matches
+    except ImportError:
+        pass
+    else:  # pragma: no cover - the real-host run
+        return bool(_api_pattern_matches(pattern, path))
+    if pattern.startswith(EXACT_API_ENTRY_MARK):
+        exact = pattern[len(EXACT_API_ENTRY_MARK) :]
+        return exact != "" and path == exact
+    if pattern.endswith("/*"):
+        base = pattern[:-2]
+        return path == base or path.startswith(base + "/")
+    if pattern.endswith("*"):
+        return path.startswith(pattern[:-1])
+    return path == pattern or path.startswith(pattern + "/")
+
 
 _UNTRACKED_DIRS = {".git", "node_modules", "__pycache__", ".pytest_cache", ".venv"}
 _WINDOWS_RESERVED = re.compile(r"^(con|prn|aux|nul|com[1-9]|lpt[1-9])$", re.IGNORECASE)
@@ -180,9 +227,19 @@ class TestTheManifest(unittest.TestCase):
     def test_the_grant_is_the_builtins_with_the_chat_endpoints(self) -> None:
         manifest, builtin = _manifest(), _builtin()
         self.assertEqual(manifest["permissions"], builtin["permissions"])
-        for entry in CHAT_GRANT:
-            with self.subTest(entry=entry):
-                self.assertIn(entry, manifest["permissions"]["api"])
+        self.assertEqual(manifest["permissions"]["api"][-len(CHAT_GRANT) :], CHAT_GRANT)
+
+    def test_the_grant_covers_every_host_path_the_page_calls(self) -> None:
+        declared = _manifest()["permissions"]["api"]
+        for path in PAGE_CALLS:
+            with self.subTest(path=path):
+                self.assertTrue(any(_declared_pattern_matches(p, path) for p in declared))
+
+    def test_the_rest_of_the_chat_routes_stays_undeclared(self) -> None:
+        declared = _manifest()["permissions"]["api"]
+        for path in UNDECLARED_CHAT_PATHS:
+            with self.subTest(path=path):
+                self.assertFalse(any(_declared_pattern_matches(p, path) for p in declared))
 
     def test_declares_nothing_adoption_cannot_carry(self) -> None:
         manifest = _manifest()

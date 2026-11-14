@@ -215,8 +215,8 @@ export function stopDevServer(id: string): Promise<SimpleResponse> {
 
 // ── Host chat API ────────────────────────────────────────────────────────────
 //
-// The host's chat endpoints, through the same scoped client (`/api/chat` is in
-// `permissions.api`).
+// The host's chat endpoints, through the same scoped client: `permissions.api`
+// declares `=/api/chat` (the send, exactly) and `/api/chat/slots` (the slot routes).
 
 const CHAT_SLOTS = '/api/chat/slots'
 
