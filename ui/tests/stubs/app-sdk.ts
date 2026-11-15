@@ -46,9 +46,16 @@ export function fmtRelative(value: Date | string | number | null | undefined): s
 
 const DECLARED: string[] = manifest.permissions.api
 
+/** The host's mark for an entry that names one path and no child (seam level 7). */
+const EXACT_API_ENTRY_MARK = '='
+
 function allowed(path: string): boolean {
   const normalized = new URL(path, 'http://localhost').pathname
   return DECLARED.some(pattern => {
+    if (pattern.startsWith(EXACT_API_ENTRY_MARK)) {
+      const exact = pattern.slice(EXACT_API_ENTRY_MARK.length)
+      return exact !== '' && normalized === exact
+    }
     if (pattern.endsWith('/*')) {
       const base = pattern.slice(0, -2)
       return normalized === base || normalized.startsWith(base + '/')
