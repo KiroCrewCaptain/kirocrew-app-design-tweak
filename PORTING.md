@@ -8,7 +8,7 @@ own `tests/` that tests the app (`test_windows_support.py`), the nine
 `test/test_design_tweak_*.py` files with their shared
 `test/design_tweak_backend_helpers.py`, and the ten website tests named in
 [Tests](#tests). Every change Kiro Crew made to that wheel copy since, up to
-`main` at `6d07df11cf`, is ported here too: see
+`main` at `af94fac51f`, is ported here too: see
 [Wheel fixes ported since the snapshot](#wheel-fixes-ported-since-the-snapshot).
 
 Line numbers below refer to that commit unless they name a file in this
@@ -77,7 +77,7 @@ for a spawned backend yet. Each import is feature-detected (`try` /
 `tests/test_no_host_imports.py` pins the exact list and that each is guarded;
 `tests/test_host_stand_ins.py` checks every stand-in refuses; the CI job
 `real-host` runs the whole backend suite against the real Kiro Crew at
-`6d07df11cf` (which also reads `app.json`'s `agentTools` through the host's own
+`af94fac51f` (which also reads `app.json`'s `agentTools` through the host's own
 manifest reader and schema builder), and the `test` job against
 `tests/host_double.py`.
 
@@ -171,12 +171,13 @@ Each needs a Kiro Crew change or an owner decision, not a change here.
    that posts into a session of its own. Carried locally; it does not block the
    pin.
 6. **Dashboard primitives.** `components/ui/dropdown-menu` (Radix), the
-   `FolderBody` collapsible, `components/RadioChipGroup`, `hooks/usePointerDrag`
-   and `utils/timeAgo` are not in the UI SDK: `ui/src/DropdownMenu.tsx` is a small
-   local menu with the same call shape, items and keyboard handling;
-   `ui/src/FolderBody.tsx`, `ui/src/RadioChipGroup.tsx` and
+   `FolderBody` collapsible, `components/RadioChipGroup`, `hooks/usePointerDrag`,
+   `utils/timeAgo` and `i18n/format`'s `fmtList` are not in the UI SDK:
+   `ui/src/DropdownMenu.tsx` is a small local menu with the same call shape, items
+   and keyboard handling; `ui/src/FolderBody.tsx`, `ui/src/RadioChipGroup.tsx` and
    `ui/src/usePointerDrag.ts` are copies; `ui/src/timeAgo.ts` rebuilds the helper
-   on the SDK's `fmtRelative`. Carried locally; it does not block the pin.
+   on the SDK's `fmtRelative`, and `ui/src/fmtList.ts` rebuilds `fmtList` on the
+   SDK's `activeLocale`. Carried locally; it does not block the pin.
 7. **Styles.** The page keeps the built-in's Tailwind utility class strings. They
    render because the dashboard's stylesheet still carries them while the
    compiled built-in page ships with Kiro Crew. Removing that page from Kiro
@@ -215,7 +216,7 @@ Each needs a Kiro Crew change or an owner decision, not a change here.
 ## Wheel fixes ported since the snapshot
 
 Every Kiro Crew commit that changed the wheel copy (the built-in's package, its
-dashboard page or its tests) between `4bb268b4e9` and `6d07df11cf`:
+dashboard page or its tests) between `4bb268b4e9` and `af94fac51f`:
 
 | Kiro Crew | What changed there | Here |
 |---|---|---|
@@ -229,6 +230,13 @@ dashboard page or its tests) between `4bb268b4e9` and `6d07df11cf`:
 | #32829 `db353b73d5` | The rail splitter drags by touch and pen (Pointer Events) | `ui/src/useDesignTweakPageState.ts`, `ui/src/usePointerDrag.ts` (gap 6); the Project rail UI test |
 | #28541 `906be01163` | A static preview's `<base href>` and the no-entry page's links URL-quote folder names | `backend/preview_files.py`; `tests/test_backend.py` |
 | #32660 `17024148f6` | The agent tool is declared in `app.json` (`agentTools`) and served at `POST /api/agent-tools` | `app.json`, `backend/http_api.py`, `tests/fixtures/builtin-app.json`; `tests/test_agent_tools.py` (gap 3) |
+| #33111 `d86392c545`, #33160 `02d4cbe1c4` | A request chip's status counts are joined with the locale's own narrow list, not an English comma (Chinese and Japanese read "、") | `ui/src/DesignTweakPage.tsx`, `ui/src/fmtList.ts` (the dashboard's `fmtList`, which the SDK does not export: gap 6); the Requests UI test |
+| #28650 `a6965dedc1` | Changing or clearing a project's preview URL, or re-adding its folder with a new one, stops the live proxy still fronting the old dev server, so the next preview binds the new URL | `backend/http_api.py`; `tests/test_backend_dev_proxy.py` |
+| #28538 `f8a3e1149a` | A static preview's source file is URL-decoded the way the static server decodes the path it serves; encoded traversal is still refused | `backend/request_state.py`; `tests/test_backend_queue.py` |
+| #34592 `026b96cb39` | A request id that ends in a newline is refused (`\Z`, not `$`), and the upstream header-name pattern is anchored the same way | `backend/request_state.py`, `backend/server.py`; `tests/test_queue_routes.py`, `tests/test_backend_dev_proxy.py` |
+| #34934 `73e4637261` | A folder URL's `sourceFile` names the entry HTML the static server serves for it | `backend/request_state.py`; `tests/test_backend_queue.py` |
+| #31863 `b0233ea0a6`, #36950 `1bef13ee6d` | The redaction tests use synthetic credentials (the host no longer treats AWS's documented example key as one), and a weak test asserts a real outcome | `tests/test_backend_queue.py`, `tests/test_devproc.py`, `tests/synthetic_credentials.py` (Kiro Crew's `testing.synthetic_credentials` values, rebuilt for the host-free run) |
+| #36342 `0efa908818` | The wheel copy declares `=/api/chat` and `/api/chat/slots` | `app.json`, `tests/fixtures/builtin-app.json` (gap 2) |
 
 ## UI
 
@@ -246,7 +254,7 @@ file).
 | `chat-core/transport/sendTurn` (`api.ts:14`, `useDesignTweakPageState.ts:16`) | `ui/src/sendTurn.ts` (gap 5) |
 | `react-router-dom` `useNavigate` (`useDesignTweakPageState.ts:14`) | SDK `useNavigate` (the one "open in chat" hop) |
 | `components/Clickable`, `components/ErrorNotice`, `hooks/useImeGuard` | The same from `@kirocrew/app-sdk/ui` and `@kirocrew/app-sdk` |
-| `components/ui/dropdown-menu`, `components/FolderBody`, `utils/timeAgo` | `ui/src/DropdownMenu.tsx`, `ui/src/FolderBody.tsx`, `ui/src/timeAgo.ts` (gap 6) |
+| `components/ui/dropdown-menu`, `components/FolderBody`, `utils/timeAgo`, `i18n/format` `fmtList` | `ui/src/DropdownMenu.tsx`, `ui/src/FolderBody.tsx`, `ui/src/timeAgo.ts`, `ui/src/fmtList.ts` (gap 6) |
 | `i18n/t.i18nT` with `apps.designTweak.*` keys | `t()` in `ui/src/i18n.ts` over `ui/i18n/<locale>.json` (all 12 dashboard locales): the subtree (English from `en.json` plus `en.manual.json`), plus `pages.chatPage.send_failed`, `pages.chatPage.send_failed_with_error`, `api.client.accepted_body_unreadable` and `pages.chat.recoveryCard.no_response_returned` as `common.*`. Exact locale, then base language, then English |
 
 ## Tests
