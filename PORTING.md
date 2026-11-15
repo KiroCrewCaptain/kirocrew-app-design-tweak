@@ -18,10 +18,14 @@ a change here.
 
 ## What carried over unchanged
 
-- `app.json` `name` (`design-tweak`), `version` (`0.10.0`), `author`, `tags`,
-  `skills`, `defaultEnabled` (`false`), `platform`, `permissions.storage`, every
-  display field, `useCases` and `configuration`. `tests/test_manifest_contract.py`
-  compares them with the built-in's manifest (`tests/fixtures/builtin-app.json`).
+- `app.json` `name` (`design-tweak`), `version` (`0.10.0` at the port, `0.10.1`
+  with the wheel fixes below), `author`, `tags`, `skills`, `defaultEnabled`
+  (`false`), `platform`, `permissions.storage`, every display field, `useCases`
+  and `configuration`. `tests/test_manifest_contract.py` compares them with the
+  built-in's manifest (`tests/fixtures/builtin-app.json`), the version as never
+  below the built-in's: a first adoption pin's version equals the wheel copy's,
+  so the Kiro Crew change that pins this release sets the wheel copy to `0.10.1`
+  with it.
 - The backend's process model: a stdlib `ThreadingHTTPServer` the gateway spawns
   and reverse-proxies at `/apps/design-tweak/api/*`, with `port: "auto"` and
   `healthCheck: "/health"`. Every route, its validation and response shape, the
@@ -97,12 +101,13 @@ manifest reader and schema builder), and the `test` job against
 
 ## Remaining gaps
 
-Gaps 1 and 3 block the adoption pin: with either open an existing user's
-record moves and loses something (gap 3). Gap 2 is closed on the Kiro Crew side
-by kirodotdev/KiroCrew#36342.
-Each needs a Kiro Crew change or an owner decision, not a change here.
+None of these blocks the adoption pin any more: gap 2 is closed by
+kirodotdev/KiroCrew#36342 and gap 3 by kirodotdev/KiroCrew#33141, and gap 1 blocks
+deleting the wheel copy, not pinning this one (owner ruling on Kiro Crew #26967).
+Each open one needs a Kiro Crew change or an owner decision, not a change here.
 
-1. **A public backend seam for spawned app processes** (`backend/_host.py`). The
+1. **A public backend seam for spawned app processes** (`backend/_host.py`; blocks
+   deleting the wheel copy, not the pin). The
    names above are a Kiro Crew change away from a published module, for example
    `kiro_crew.apps.sdk.backend` with the credential fence, a safe read, the
    redaction floor, the event log and the process helpers. Until then a release
@@ -110,8 +115,12 @@ Each needs a Kiro Crew change or an owner decision, not a change here.
    `/health`), not break open. The credential scanner is public now
    (`kiro_crew.security.iter_credential_matches`); the private fallback is read
    only on a Kiro Crew 0.12.0 host. Kiro Crew's `security/paths.py:225` comment
-   names this app as a reader. Whether such a seam exists is an open owner
-   question on Kiro Crew #26967.
+   names this app as a reader. Under the owner ruling on Kiro Crew #26967 private
+   host names reached through feature-detected shims block deleting a wheel copy,
+   not pinning it; Kiro Crew's backend SDK (App Kit seam level 7,
+   `kiro_crew.apps.backend_sdk`) is where these names move before that deletion.
+   Every name above resolves on Kiro Crew `main` (the `real-host` job; `/health`
+   answers `hostGaps: []`).
 2. **The chat grant (closed by kirodotdev/KiroCrew#36342).** Adoption's permission-parity
    check (E9, `apps/builtin_adoption_checks.py`, `permission_refusal`) holds back
    every entry the built-in's approved set does not hold, and a built-in approves
@@ -134,30 +143,27 @@ Each needs a Kiro Crew change or an owner decision, not a change here.
    (`GET /api/chat/slots`) shows an app token only its own slots. The exact entry
    is App Kit seam level 7: a host below it reads `=/api/chat` as a literal no
    path equals, so the send fails closed there, and the pin's `minAppSdkLevel` is
-   7 (see [Release handoff](#release-handoff-one-commit-for-both-pins)).
+   at least that (see [Release handoff](#release-handoff-one-commit-for-both-pins)).
    `tests/test_manifest_contract.py` and `ui/tests/hostBoundary.test.ts` pin the
    list, every page call it covers, and the chat routes it does not. A fresh
    install shows both entries on the trust prompt.
-3. **The agent's progress tool is not listed for this copy.** The tool itself no
-   longer lives in Kiro Crew: this app declares it (`agentTools`) and serves it
-   (`POST /api/agent-tools`), exactly as the wheel copy does since Kiro Crew
-   #32660, and the core lists and forwards it through the app-agnostic
-   `apps/app_agent_tools.py` seam. But that seam reads the block only for a
-   first-party app, `execution.builtin_app_names()`: a shipped manifest declares
-   the name AND the built-in owns the installed slot. The App Kit spec says so in
-   as many words ("a built-in's once its wheel copy is released by adoption,
-   lists nothing"; `app-kit-platform.md` § 30.1), because `kirocrew-core` is
-   auto-approved as a whole server and a non-first-party tool has no such
-   grant. So after adoption, and on a fresh install, the agent is never handed
-   `design_tweak_update_thread`, and the comment dots never turn done: the
-   behaviour an adopted user has today would be lost. The old route (core's own
-   tool, admitted on the internal secret for `/apps/design-tweak/api/thread`) was
-   removed by the same change. Shipping a stdio `mcpServers` entry instead is
-   refused by adoption (E10: the wheel built-in declares none), and its calls
-   would ask for approval each time. Closing this needs the seam's trust to
-   follow a record adopted from its pin (the same step the spec names for an
-   adopted app's own MCP server), or a listing path that asks before each call;
-   the spec records that as a maintainer's decision. Core's
+3. **The agent's progress tool after adoption (closed by kirodotdev/KiroCrew#33141).**
+   The tool no longer lives in Kiro Crew: this app declares it (`agentTools`) and
+   serves it (`POST /api/agent-tools`), exactly as the wheel copy does since Kiro
+   Crew #32660, and the core lists and forwards it through the app-agnostic
+   `apps/app_agent_tools.py` seam. That seam read the block only for a
+   builtin-owned record, so an adopted user's agent would have lost
+   `design_tweak_update_thread` and the comment dots would never turn done.
+   kirodotdev/KiroCrew#33141 also lists the block of a record adopted from its pin
+   (`_adopted_first_party_apps`, through `adopted_under_pin_trust`: the wheel pins
+   the app, the record is adopted from the pin's repository, and the execution
+   grant is bound to that repository), keeping a tool only when its name,
+   description, title, `inputSchema`, `maxResultChars` and the block's `route`
+   equal the wheel copy's. This `app.json` carries the wheel copy's block
+   unchanged (`tests/test_agent_tools.py`, `tests/test_manifest_contract.py`).
+   A copy installed from a clone, not moved by adoption, is not first-party, so
+   its agent is still not handed the tool; that is the App Kit rule for every
+   installed app (`app-kit-platform.md` section 30.1). Core's
    `data/mcp_tool_titles.json` row for the tool stays until the app leaves.
 4. **Execution trust.** Closed by adoption: a built-in's spawned backend is
    admitted without a grant (`apps/backend.py`, `is_builtin_app`), and adoption
@@ -296,23 +302,26 @@ after the tree is fetched and verified; a record that cannot move (offline, a
 refused grant, or the operator's admission policy) keeps running the
 built-in copy, unchanged. The KiroCrewApps catalog gets a `git` row for this
 repository at that same commit in the same release. Removing the built-in from
-Kiro Crew is a later release, after gaps 1, 3, 7 and 8 are closed and a release
-carrying kirodotdev/KiroCrew#36342 has shipped.
+Kiro Crew is a later release, after gaps 1, 7 and 8 are closed.
 
 ## Release handoff: one commit for both pins
 
 The adoption pin and the catalog row must name the same commit, and that commit
-must be the ported tree. Do not compute the pin before kirodotdev/KiroCrew#36342 ships
-or while gap 3 is open: without that change the release adopts nothing (E9
-refuses), and with gap 3 an adopted
-user's agent loses its progress tool. The pin's `minAppSdkLevel` must be at
-least 7: level 2 is the host that reads `agentTools`, and level 7 the one that
-reads the exact `=/api/chat` entry (gap 2).
+must be the ported tree, and the pinning Kiro Crew change sets the wheel copy's
+`version` to this tree's (`0.10.1`) in the same commit (adoption refuses any
+other with `version_mismatch`). The pin needs kirodotdev/KiroCrew#36342 (without it
+E9 refuses the chat entries) and kirodotdev/KiroCrew#33141 (without it an adopted
+user's agent loses its progress tool), both on Kiro Crew `main`. Set
+`minAppSdkLevel` to 8 with `--min-sdk-level 8`: level 2 is the host that reads
+`agentTools`, and the exact `=/api/chat` entry is documented as level 7, but it
+landed after the level-7 constant did, so a level-7 host cut before it (Kiro Crew
+0.13.0) reads `=/api/chat` as a literal no path equals and the page could not
+send. Level 8 is the first that always carries it.
 
 1. Call this repository's `main` head, a full 40-hex SHA, `C`
    (`git rev-parse HEAD`).
 2. In the Kiro Crew release PR that adds adoption, run
-   `python3 scripts/adoption_pin.py compute <this URL> C` and add the row it
+   `python3 scripts/adoption_pin.py compute <this URL> C --min-sdk-level 8` and add the row it
    prints (commit, `treeSha256`, `archiveSha256`, `legacyNav`) to
    `src/kiro_crew/apps/adoption-pins.json`; then
    `python3 scripts/adoption_pin.py verify`. Until that row exists the release

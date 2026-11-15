@@ -201,11 +201,12 @@ The agent is probably waiting for you. Open the session with the chat icon on
 the request's row and answer its question.
 
 **The agent finished, but the comments never turn green.**
-This happens on a copy of Design Tweak installed from its repository instead of
-the one that comes with Kiro Crew: Kiro Crew does not hand the agent the tool
-that posts its notes and done marks to this page yet. The edits themselves still
-land in your files. Choose the refresh button to see them, and archive the
-request from its **⋯** menu when you are happy with it.
+This happens on a copy of Design Tweak installed from a clone of this repository:
+Kiro Crew hands the agent the tool that posts its notes and done marks only to
+the copy that comes with Kiro Crew, or the one Kiro Crew moved onto this
+repository for you. The edits themselves still land in your files. Choose the
+refresh button to see them, and archive the request from its **⋯** menu when you
+are happy with it.
 
 **"Request N is ready but this app has no folder…"**
 The request has no project folder, so there is no session to send it to. Set the
@@ -240,7 +241,9 @@ this copy differs from the built-in, why, and what Kiro Crew still has to change
 
 ### What it needs from Kiro Crew
 
-Kiro Crew 0.12.0 or later (`minKiroCrewVersion`). The backend runs under the
+Kiro Crew 0.12.0 or later (`minKiroCrewVersion`); sending a batch needs a Kiro
+Crew whose App Kit reads an exact `permissions.api` entry (`=/api/chat`), which
+Kiro Crew `main` does since kirodotdev/KiroCrew#36344. The backend runs under the
 gateway's own Python and uses only the standard library plus a few Kiro Crew
 functions that have no published App Kit surface for an app's own process yet:
 the proxy signature check, the credential-path check, the link-safe file read,
@@ -253,10 +256,10 @@ The agent reports progress through the `design_tweak_update_thread` tool. The
 app declares it in `app.json` (`agentTools`) and serves it from its own backend at
 `POST /api/agent-tools`, as one write to the comment's thread; Kiro Crew lists it
 to the agent, checks each call against the declared arguments, and forwards it
-through the signed proxy. Kiro Crew lists an app's declared tools only for the
-copy that ships with Kiro Crew today, so a copy installed from this repository
-installs the declaration but the agent does not see the tool yet (PORTING.md,
-gap 3).
+through the signed proxy. Kiro Crew lists an app's declared tools for the copy
+that ships with Kiro Crew and for the copy it moves onto this repository at its
+pinned commit (kirodotdev/KiroCrew#33141). A copy installed from a clone installs
+the declaration, but the agent does not see the tool (PORTING.md, gap 3).
 
 ### Install from a clone
 

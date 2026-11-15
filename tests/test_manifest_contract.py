@@ -4,8 +4,10 @@ Kiro Crew adopts a user's built-in record onto this repository in place, at a
 pinned commit, with no consent dialog, so the tree must be something it can take
 over unchanged:
 
-- the same name, version, skills, ``storage`` grant, platform and
-  ``defaultEnabled`` as the built-in (``tests/fixtures/builtin-app.json`` is its
+- the same name, skills, ``storage`` grant, platform and ``defaultEnabled`` as
+  the built-in, and a version never below its (a first adoption pin's version
+  equals the wheel copy's, so the Kiro Crew change that pins a release of this
+  tree sets the wheel copy to that version with it) (``tests/fixtures/builtin-app.json`` is its
   manifest as kirodotdev/KiroCrew#36342 left it, on Kiro Crew ``main`` at
   ``af94fac51f``), and no agents, MCP servers or overlays it did not have;
 - the built-in's backend paths, so the proxy path (and the agent's progress
@@ -159,6 +161,10 @@ def _manifest() -> dict:
     return json.loads((APP_ROOT / "app.json").read_text(encoding="utf-8"))
 
 
+def _version(value: str) -> tuple[int, ...]:
+    return tuple(int(part) for part in value.split("."))
+
+
 def _builtin() -> dict:
     return json.loads((APP_ROOT / "tests" / "fixtures" / "builtin-app.json").read_text("utf-8"))
 
@@ -218,9 +224,10 @@ class TestTheBundle(unittest.TestCase):
 class TestTheManifest(unittest.TestCase):
     def test_what_adoption_compares_is_the_builtins(self) -> None:
         manifest, builtin = _manifest(), _builtin()
-        for key in ("name", "version", "skills", "defaultEnabled", "platform"):
+        for key in ("name", "skills", "defaultEnabled", "platform"):
             with self.subTest(field=key):
                 self.assertEqual(manifest[key], builtin[key])
+        self.assertGreaterEqual(_version(manifest["version"]), _version(builtin["version"]))
         self.assertNotIn("agents", builtin)
         self.assertNotIn("agents", manifest)
 
