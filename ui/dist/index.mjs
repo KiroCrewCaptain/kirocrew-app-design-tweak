@@ -2112,6 +2112,21 @@ function t(key, vars) {
 	}
 	return key;
 }
+// src/fmtList.ts
+/**
+* Join natural-language parts the way the active language lists them, dropping
+* empty ones. Only for an enumeration shown to a reader; a technical list keeps
+* its literal separator.
+*/
+function fmtList(items, options) {
+	const type = options?.type ?? "conjunction";
+	const style = options?.style ?? "long";
+	return new Intl.ListFormat(activeLocale(), {
+		localeMatcher: "lookup",
+		type,
+		style
+	}).format(items.filter((item) => item !== ""));
+}
 // src/timeAgo.ts
 /** A timestamp this far ahead of us is clock skew, not the future. */
 var SKEW_TOLERANCE_MS = 6e4;
@@ -3661,7 +3676,10 @@ function reqChip(req) {
 	if (done) parts.push(t("requests.chip_done", { n: done }));
 	if (queued) parts.push(t("requests.chip_queued", { n: queued }));
 	return {
-		label: parts.join(", ") || t("requests.chip_in_progress", { n }),
+		label: fmtList(parts, {
+			type: "conjunction",
+			style: "narrow"
+		}) || t("requests.chip_in_progress", { n }),
 		fg: "var(--accent)",
 		bg: "var(--accent-subtle)"
 	};
